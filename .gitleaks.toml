@@ -1,0 +1,24 @@
+title = "campus-edu-mcp gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "jsessionid-cookie"
+description = "Real-looking JSESSIONID / route cookie"
+regex = '''(?i)(jsessionid|route)\s*[=:]\s*["']?[0-9A-F]{16,}'''
+tags = ["cookie"]
+
+[[rules]]
+id = "student-id-field"
+description = "Student ID field that is not a fictional 2099 number"
+regex = '''["'](xh|XH|xh_id)["']\s*:\s*["'](?:[0-9]{8,12})["']'''
+tags = ["pii"]
+[[rules.allowlists]]
+regexTarget = "match"
+regexes = ['''2099\d{6}''']
+
+[allowlist]
+description = "fictional test values and intentional negative samples"
+regexes = ['''FAKE[-_A-Za-z0-9]*''']
+paths = ['''tests/test_scripts\.py''', '''__pycache__''', '''\.venv''']

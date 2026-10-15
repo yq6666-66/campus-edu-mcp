@@ -1,0 +1,29 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+  - repo: local
+    hooks:
+      - id: check-adapters
+        name: adapters must not make their own requests
+        entry: uv run python scripts/check_adapters.py
+        language: system
+        pass_filenames: false
+        files: ^src/campus_edu_mcp/adapters/
+      - id: check-fixtures
+        name: fixtures must not contain real IDs or names
+        entry: uv run python scripts/check_fixtures.py
+        language: system
+        pass_filenames: false
+        files: ^(tests/fixtures|mock_server)/
