@@ -1,0 +1,67 @@
+[project]
+name = "campus-edu-mcp"
+version = "0.1.0"
+description = "只读的高校教务 MCP 服务（课表、考试、成绩），当前适配正方 V9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "campus-edu-mcp contributors" }]
+keywords = ["mcp", "zfsoft", "education", "read-only"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Private :: Do Not Upload",
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "cryptography>=50.0.2",
+    "httpx==0.28.1",
+    "keyring>=25.7.0",
+    "mcp==2.3.0",
+    "pydantic==2.14.1",
+]
+
+[project.scripts]
+campus-edu-mcp = "campus_edu_mcp.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.0",
+    "pytest==9.1.1",
+    "pytest-cov>=7.1.0",
+    "respx>=0.23.1",
+    "ruff==0.17.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "S108", "S603", "S607"]
+"scripts/**" = ["S101"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+files = ["src", "scripts", "mock_server", "tests"]
+
+[[tool.mypy.overrides]]
+module = ["respx.*", "keyring.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --cov=campus_edu_mcp --cov-report=term-missing --cov-report=json:coverage.json --cov-fail-under=70"
+
+[tool.coverage.run]
+branch = true
+source = ["campus_edu_mcp"]
