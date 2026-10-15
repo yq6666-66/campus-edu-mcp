@@ -1,0 +1,91 @@
+"""端到端冒烟：真实启动 MCP stdio 子进程，连到本地 mock_server。"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import sys
+import threading
+import urllib.request
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Any
+
+import pytest
+from mcp import ClientSession, StdioServerParameters, stdio_client
+
+from mock_server.server import BASE, VALID_COOKIE, serve
+
+
+@pytest.fixture
+def mock_school() -> Iterator[str]:
+    httpd, _state = serve(0)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{httpd.server_address[1]}"
+    httpd.shutdown()
+    httpd.server_close()
+
+
+def _text(result: Any) -> str:
+    return "".join(getattr(c, "text", "") for c in result.content)
+
+
+async def _session(env: dict[str, str]) -> dict[str, str]:
+    params = StdioServerParameters(
+        command=sys.executable, args=["-m", "campus_edu_mcp", "serve"], env=env
+    )
+    out: dict[str, str] = {}
+    with open(os.devnull, "w") as errlog:
+        async with (
+            stdio_client(params, errlog=errlog) as (read, write),
+            ClientSession(read, write) as session,
+        ):
+            await session.initialize()
+            tools = await session.list_tools()
+            out["tools"] = ",".join(sorted(t.name for t in tools.tools))
+            out["status"] = _text(await session.call_tool("session_status", {}))
+            out["timetable"] = _text(await session.call_tool("get_timetable", {"year": 2098}))
+            out["exams"] = _text(await session.call_tool("get_exams", {"year": 2098, "term": 1}))
+            out["grades"] = _text(await session.call_tool("get_grades", {}))
+            out["scores"] = _text(await session.call_tool("get_grades", {"include_scores": True}))
+    return out
+
+
+def _env(base_url: str, cookie_file: Path, tmp_path: Path) -> dict[str, str]:
+    return {
+        "CAMPUS_EDU_BASE_URL": base_url + BASE,
+        "CAMPUS_EDU_COOKIE_FILE": str(cookie_file),
+        "CAMPUS_EDU_DATA_DIR": str(tmp_path / "data"),
+        "CAMPUS_EDU_MIN_INTERVAL": "0",
+        "PYTHON_KEYRING_BACKEND": "keyring.backends.fail.Keyring",
+        "PYTHONPATH": str(Path(__file__).resolve().parent.parent),
+    }
+
+
+def test_stdio_end_to_end(mock_school: str, tmp_path: Path) -> None:
+    cookie = tmp_path / "cookie.txt"
+    cookie.write_text(f"JSESSIONID={VALID_COOKIE}", "utf-8")
+    out = asyncio.run(_session(_env(mock_school, cookie, tmp_path)))
+    assert out["tools"] == "get_exams,get_grades,get_timetable,session_status"
+    assert "会话有效" in out["status"]
+    assert len(json.loads(out["timetable"])["courses"]) == 6
+    assert len(json.loads(out["exams"])["exams"]) == 4
+    grades = json.loads(out["grades"])
+    assert grades["failed_count"] >= 1 and "score" not in grades["grades"][0]
+    assert "score" in json.loads(out["scores"])["grades"][0]
+    everything = json.dumps(out, ensure_ascii=False)
+    assert VALID_COOKIE not in everything
+    assert "2099000001" not in everything and "测试学生" not in everything
+    with urllib.request.urlopen(mock_school + "/__hits") as resp:  # noqa: S310 - 本地 mock
+        assert json.load(resp)["write_hits"] == 0
+
+
+def test_stdio_expired_session(mock_school: str, tmp_path: Path) -> None:
+    cookie = tmp_path / "cookie.txt"
+    cookie.write_text("JSESSIONID=FAKE-EXPIRED", "utf-8")
+    out = asyncio.run(_session(_env(mock_school, cookie, tmp_path)))
+    assert "会话已失效" in out["status"]
+    assert "SessionExpired" in out["timetable"] and "import-session" in out["timetable"]
+    assert "FAKE-EXPIRED" not in json.dumps(out, ensure_ascii=False)
