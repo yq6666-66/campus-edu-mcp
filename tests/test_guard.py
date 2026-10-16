@@ -248,3 +248,25 @@ def test_method_preserving_redirect_refused(status: int) -> None:
     with make_client(rec) as client, pytest.raises(UpstreamError):
         client.post_form(GRADES[0], GRADES[1], {})
     assert len(rec.requests) == 1
+
+
+def test_encoded_login_redirect_detected() -> None:
+    rec = Recorder(lambda r: httpx.Response(302, headers={"location": "/%6cogin"}))
+    with make_client(rec) as client, pytest.raises(SessionExpired):
+        client.post_form(GRADES[0], GRADES[1], {})
+
+
+def test_encoded_dotdot_rejected() -> None:
+    wl = Whitelist(BASE_URL, RULES)
+    req = httpx.Request("POST", "https://jw.example.edu.cn/jwglxt/%2e%2e/cjcx/cjcx_cxXsgrcj.html")
+    decision = wl.check(req)
+    assert not decision.allowed
+    assert "编码" in decision.reason
+
+
+def test_normalized_parent_path_stays_under_base() -> None:
+    wl = Whitelist(BASE_URL, RULES)
+    req = httpx.Request("POST", "https://jw.example.edu.cn/jwglxt/a/../cjcx/cjcx_cxXsgrcj.html")
+    # httpx 规范化后路径仍在 base 下；不得因异常失败
+    decision = wl.check(req)
+    assert decision.allowed or "白名单" in decision.reason or "参数" in decision.reason

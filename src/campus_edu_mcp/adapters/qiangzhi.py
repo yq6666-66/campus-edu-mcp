@@ -13,7 +13,7 @@ import re
 from collections.abc import Sequence
 from typing import ClassVar
 
-import httpx
+from httpx import Response
 
 from ..errors import SessionExpired, UpstreamError
 from ..gradesutil import judge_passed
@@ -127,7 +127,7 @@ class QiangzhiAdapter:
         return self._text(response)
 
     @staticmethod
-    def _text(response: httpx.Response) -> str:
+    def _text(response: Response) -> str:
         if response.status_code in (401, 403):
             raise SessionExpired("会话已失效，请重新导入会话")
         if response.status_code != 200:

@@ -33,7 +33,11 @@ BAD_SNIPPETS = [
     "from httpx import Client as C",
     "import httpx\nhttpx.post('x')",
     "import socket",
+    "import os\nos.system('curl x')",
+    "import asyncio\nasyncio.open_connection('x', 80)",
     "def f(c):\n    return c._client.send(None)",
+    "def f(c):\n    return c.__dict__['_client']",
+    "def f(c):\n    return c.__getattribute__('_client')",
     "x = getattr(object, 'a')",
     "eval('1')",
     "import importlib",
@@ -48,8 +52,8 @@ def test_bad_snippets_detected() -> None:
 
 def test_allowed_snippet() -> None:
     ok = (
-        "import httpx\nfrom ..guard import GuardedClient, Rule\n"
-        "def f(r: httpx.Response) -> None: ..."
+        "from httpx import Response\nfrom ..guard import GuardedClient, Rule\n"
+        "def f(r: Response) -> None: ..."
     )
     assert check_adapters.check_source(ok) == []
 

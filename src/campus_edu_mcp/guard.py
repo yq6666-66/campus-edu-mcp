@@ -19,7 +19,7 @@ import threading
 import time
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, unquote
 
 import httpx
 
@@ -75,8 +75,10 @@ class Whitelist:
         if not path.startswith(self.base_path):
             return Decision(False, "路径不在 base_url 之下")
         raw_path = url.raw_path.split(b"?", 1)[0]
-        if b"%" in raw_path or b";" in raw_path or "\x00" in path:
-            return Decision(False, "路径含编码字符或矩阵参数")
+        if b"%" in raw_path or b";" in raw_path or b"\\" in raw_path or b"\x00" in raw_path:
+            return Decision(False, "路径含编码字符、反斜杠或矩阵参数")
+        if ".." in path.split("/"):
+            return Decision(False, "路径含父目录段")
         rel = path[len(self.base_path) :]
         try:
             params = _collect_params(request)
@@ -199,12 +201,11 @@ class GuardedClient:
     def get(self, path: str, params: Mapping[str, str] | None = None) -> httpx.Response:
         return self._request("GET", path, params=params or {}, data=None)
 
-    def _throttle(self) -> None:
-        with self._lock:
-            wait = self._last + self.min_interval - self._clock()
-            if wait > 0:
-                self._sleep(wait)
-            self._last = self._clock()
+    def _throttle_unlocked(self) -> None:
+        wait = self._last + self.min_interval - self._clock()
+        if wait > 0:
+            self._sleep(wait)
+        self._last = self._clock()
 
     def _request(
         self,
@@ -216,23 +217,24 @@ class GuardedClient:
     ) -> httpx.Response:
         if "://" in path or path.startswith("//"):
             raise GuardViolation("适配器只能使用相对路径")
-        self._throttle()
-        request = self._client.build_request(method, path.lstrip("/"), params=params, data=data)
-        for _hop in range(MAX_REDIRECTS + 1):
-            response = self._client.send(request)
-            if not response.is_redirect:
-                return response
-            if response.status_code in (307, 308):
-                # 307/308 要求保持方法和请求体，只读客户端不跟随
-                raise UpstreamError(f"教务系统返回了 {response.status_code} 重定向，已拒绝跟随")
-            location = response.headers.get("location", "")
-            target = request.url.join(location)
-            if any(marker in target.path for marker in self.login_markers):
-                raise SessionExpired("会话已失效（被重定向到登录页），请重新导入会话")
-            # 重定向一律降级为不带请求体的 GET，并重新走 guard
-            self._throttle()
-            request = self._client.build_request("GET", target)
-        raise UpstreamError("重定向次数过多")
+        # 锁覆盖节流与发送，避免多线程把间隔压到低于 min_interval
+        with self._lock:
+            self._throttle_unlocked()
+            request = self._client.build_request(method, path.lstrip("/"), params=params, data=data)
+            for _hop in range(MAX_REDIRECTS + 1):
+                response = self._client.send(request)
+                if not response.is_redirect:
+                    return response
+                if response.status_code in (307, 308):
+                    raise UpstreamError(f"教务系统返回了 {response.status_code} 重定向，已拒绝跟随")
+                location = response.headers.get("location", "")
+                target = request.url.join(location)
+                decoded_path = unquote(target.path)
+                if any(marker in decoded_path for marker in self.login_markers):
+                    raise SessionExpired("会话已失效（被重定向到登录页），请重新导入会话")
+                self._throttle_unlocked()
+                request = self._client.build_request("GET", target)
+            raise UpstreamError("重定向次数过多")
 
     def close(self) -> None:
         self._client.close()

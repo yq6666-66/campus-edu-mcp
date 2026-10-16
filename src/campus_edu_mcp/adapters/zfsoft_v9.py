@@ -12,7 +12,7 @@ import re
 from collections.abc import Sequence
 from typing import Any, ClassVar
 
-import httpx
+from httpx import Response
 
 from ..errors import SessionExpired, UpstreamError
 from ..gradesutil import judge_passed
@@ -99,7 +99,7 @@ class ZfsoftV9Adapter:
         return self._parse(response)
 
     @staticmethod
-    def _parse(response: httpx.Response) -> dict[str, Any]:
+    def _parse(response: Response) -> dict[str, Any]:
         if response.status_code in (401, 403):
             raise SessionExpired("会话已失效，请重新导入会话")
         if response.status_code != 200:
