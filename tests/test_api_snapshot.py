@@ -134,6 +134,7 @@ def test_cli_surface_frozen() -> None:
         "clear-session",
         "doctor",
         "schools",
+        "detect-vendor",
         "login",  # experimental
         "export-ics",  # experimental
     }

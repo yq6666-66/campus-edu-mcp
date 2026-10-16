@@ -40,10 +40,20 @@ def _parser() -> argparse.ArgumentParser:
     sv.add_argument("--port", type=int, default=8848, help="http 传输端口（仅本机）")
     sc = sub.add_parser("schools", help="列出学校登记表及其验证状态")
     sc.add_argument("--dir", type=Path, default=None, help="登记表目录（默认仓库 schools/）")
+    dv = sub.add_parser(
+        "detect-vendor",
+        help="只读探测教务厂商（仅公开 GET，不带 Cookie，不登录）",
+    )
+    dv.add_argument("--base-url", required=True, help="教务站点根，如 https://jw.example.edu.cn/")
+    dv.add_argument("--json", action="store_true", help="输出 JSON")
+    dv.add_argument("--min-interval", type=float, default=2.0, help="探针间隔秒数（默认 2）")
     c = sub.add_parser("configure", help="设置教务系统地址")
     c.add_argument("--base-url", required=True, help="如 https://jw.example.edu.cn/jsxsd/")
     c.add_argument(
-        "--vendor", default="qiangzhi", choices=["qiangzhi", "zfsoft_v9"], help="教务厂商"
+        "--vendor",
+        default="qiangzhi",
+        choices=["qiangzhi", "zfsoft_v9", "supwisdom_eams5"],
+        help="教务厂商",
     )
     c.add_argument("--school", default=None, help="学校配置 id，如 example-qiangzhi")
     c.add_argument("--min-interval", type=float, default=2.0, help="两次请求的最小间隔秒数")
@@ -168,6 +178,18 @@ def run(argv: Sequence[str] | None = None) -> int:
             from .server import build_server
 
             build_server().run("stdio")
+            return 0
+        if command == "detect-vendor":
+            import json as _json
+
+            from .detect_vendor import detect, format_human
+
+            result = detect(args.base_url, min_interval=max(args.min_interval, 0.0))
+            print(
+                _json.dumps(result.as_dict(), ensure_ascii=False, indent=2)
+                if args.json
+                else format_human(result)
+            )
             return 0
         if command == "schools":
             from .registry import list_schools

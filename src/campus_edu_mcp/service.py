@@ -11,6 +11,7 @@ from typing import Any, Protocol
 import httpx
 
 from .adapters.qiangzhi import QiangzhiAdapter
+from .adapters.supwisdom_eams5 import SupwisdomEams5Adapter
 from .adapters.zfsoft_v9 import ZfsoftV9Adapter
 from .cookies import parse_cookie_text
 from .errors import ConfigError, ProjectError, SessionExpired, SessionMissing
@@ -28,7 +29,11 @@ class _AdapterFactory(Protocol):
     def __call__(self, client: GuardedClient, **kwargs: Any) -> Any: ...
 
 
-ADAPTERS: dict[str, Any] = {"qiangzhi": QiangzhiAdapter, "zfsoft_v9": ZfsoftV9Adapter}
+ADAPTERS: dict[str, Any] = {
+    "qiangzhi": QiangzhiAdapter,
+    "zfsoft_v9": ZfsoftV9Adapter,
+    "supwisdom_eams5": SupwisdomEams5Adapter,
+}
 IMPORT_HINT = "请在终端运行 `campus-edu-mcp import-session --cookie-file <文件>` 导入会话。"
 REIMPORT_HINT = "请在终端运行 `campus-edu-mcp import-session --cookie-file <文件>` 重新导入。"
 
@@ -109,6 +114,10 @@ class Service:
             return QiangzhiAdapter(
                 client, exams_path=config.exams_path or "xsks/xsksap_list"
             ), client
+        if adapter_cls is SupwisdomEams5Adapter:
+            path = httpx.URL(config.base_url).path.strip("/")
+            prefix = "eams5-student" if path.endswith("eams5-student") else "student"
+            return SupwisdomEams5Adapter(client, prefix=prefix), client
         return adapter_cls(client), client
 
     def _run(self, fn: Callable[[Any], Any]) -> Any:

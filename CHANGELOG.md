@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-10-16
+
+### Added
+
+- `campus-edu-mcp detect-vendor --base-url URL [--json]`: read-only public GET probes to guess the academic-system vendor. Path/body fingerprints beat hostnames (a host named like Zhengfang can still be Supwisdom). Rate-limited (default 2s).
+- Unverified adapter skeleton `supwisdom_eams5` (Supwisdom new EAMS / EAMS5 under `/student/` or `/eams5-student/`): gated by `CAMPUS_EDU_ALLOW_UNVERIFIED=1`, cookie-import only, whitelist limited to public GETs (`login`, `login-salt`, `home`). Timetable/grades/exams raise `ConfigError` until a redacted HAR is contributed.
+- `docs/supported-vendors.md` compatibility table; `docs/har-contribution.md` for redacted HAR contributions.
+- Vendor survey notes kept outside the repo (`../vendor-survey.md`).
+
+### Changed
+
+- `configure --vendor` accepts `supwisdom_eams5`.
+- CLI surface snapshot includes `detect-vendor`.
+
 ## [1.0.0] - 2026-10-16
 
 ### Added

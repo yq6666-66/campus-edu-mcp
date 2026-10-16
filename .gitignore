@@ -21,3 +21,4 @@ session.tmp
 
 # DeepSeek review artifacts (kept outside the published tree)
 deepseek-raw/
+tests/.banned-words.local

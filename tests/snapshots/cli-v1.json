@@ -17,7 +17,8 @@
    "default": "qiangzhi",
    "choices": [
     "qiangzhi",
-    "zfsoft_v9"
+    "zfsoft_v9",
+    "supwisdom_eams5"
    ]
   },
   {
@@ -26,6 +27,32 @@
    ],
    "required": false,
    "default": null,
+   "choices": null
+  },
+  {
+   "flags": [
+    "--min-interval"
+   ],
+   "required": false,
+   "default": 2.0,
+   "choices": null
+  }
+ ],
+ "detect-vendor": [
+  {
+   "flags": [
+    "--base-url"
+   ],
+   "required": true,
+   "default": null,
+   "choices": null
+  },
+  {
+   "flags": [
+    "--json"
+   ],
+   "required": false,
+   "default": false,
    "choices": null
   },
   {

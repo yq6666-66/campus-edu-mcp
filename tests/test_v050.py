@@ -41,7 +41,7 @@ def test_repo_schools_are_fictional_and_valid() -> None:
     for filename, school, error in entries:
         assert school is not None, (filename, error)
         assert httpx.URL(school.base_url).host.endswith("example.edu.cn"), filename
-        assert school.vendor in {"qiangzhi", "zfsoft_v9"}
+        assert school.vendor in {"qiangzhi", "zfsoft_v9", "supwisdom_eams5"}
 
 
 def test_parse_school_and_status() -> None:

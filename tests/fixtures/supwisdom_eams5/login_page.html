@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>学生登录</title>
+<link rel="stylesheet" href="/student/static/eams-ui/theme.css"/>
+<script>window.CONTEXT_PATH='/student';</script>
+</head><body>
+<form id="loginForm" method="post" action="/student/login">
+  <input name="username" type="text" placeholder="学号"/>
+  <input name="password" type="password" placeholder="密码"/>
+  <input name="captchaToken" type="text" placeholder="验证码"/>
+  <button type="submit">登录</button>
+</form>
+<script src="/student/static/sw-ui/login.js"></script>
+<script>
+// 公开资料：先 GET login-salt，再 POST login；本项目不实现密码登录
+fetch(CONTEXT_PATH + '/login-salt');
+</script>
+<div>powered by fictional-supwisdom-eams-ui</div>
+</body></html>

@@ -30,9 +30,18 @@ VERIFIED_ON: dict[str, dict[str, str | None]] = {
         "grades": None,
         "session_status": None,
     },
+    "supwisdom_eams5": {
+        "timetable": None,
+        "exams": None,
+        "grades": None,
+        "session_status": None,
+        "terms": None,
+        "empty_classrooms": None,
+        "password_login": None,
+    },
 }
 
-UNVERIFIED_VENDORS = frozenset({"zfsoft_v9"})
+UNVERIFIED_VENDORS = frozenset({"zfsoft_v9", "supwisdom_eams5"})
 ALLOW_UNVERIFIED_ENV = "CAMPUS_EDU_ALLOW_UNVERIFIED"
 
 

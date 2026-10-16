@@ -1,0 +1,8 @@
+# 树维新 EAMS（EAMS5）示例 —— 请改成你自己学校的地址后再用
+school_id: example-supwisdom-eams5
+name: Example Supwisdom EAMS5 School
+vendor: supwisdom_eams5
+base_url: https://jw.example.edu.cn/student/
+notes: |
+  未 live 实测。公开指纹：CONTEXT_PATH、eams-ui、GET login-salt。
+  业务路径待脱敏 HAR。需 CAMPUS_EDU_ALLOW_UNVERIFIED=1。

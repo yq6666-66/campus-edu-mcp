@@ -28,8 +28,10 @@ The server is built with the official MCP SDK (`mcp` 2.3.0, `MCPServer`, stdio t
 
 ## Status and limitations
 
-- Version: `1.0.0` (local, unreleased). Stability & deprecation policy: `docs/api-stability.md` (Chinese); upgrade notes: `docs/migration.md`.
+- Version: `1.1.0` (local, unreleased). Stability & deprecation policy: `docs/api-stability.md` (Chinese); upgrade notes: `docs/migration.md`.
 - Experimental `campus-edu-mcp login --username ID` (Qiangzhi only, CLI only, **not live-verified**): manual captcha from a local image file, password via getpass only, never stored and never through MCP; requires a system keyring.
+- `campus-edu-mcp detect-vendor --base-url URL` guesses the vendor from public GET fingerprints (hostname is not trusted).
+- Compatibility table: `docs/supported-vendors.md`.
 - `campus-edu-mcp schools` lists the school registry with `verified` / `stale` (older than 183 days) / `pending`.
 - Experimental Streamable HTTP: `CAMPUS_EDU_HTTP_TOKEN=<32+ random chars> campus-edu-mcp serve --transport http --port 8848` — binds 127.0.0.1 only, requires `Authorization: Bearer <token>`, Host/Origin restricted to localhost.
 - `campus-edu-mcp doctor [--online]` self-check (reports presence only, never cookie values).
