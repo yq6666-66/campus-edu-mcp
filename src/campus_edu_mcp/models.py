@@ -60,3 +60,12 @@ class SessionStatus(_Base):
     imported: bool
     valid: bool | None = None
     message: str
+
+
+class TermOption(_Base):
+    """教务系统学期下拉框中的一个学期。"""
+
+    year: int = Field(ge=2000, le=2100, description="学年起始年")
+    term: int = Field(ge=1, le=3)
+    label: str
+    current: bool = Field(default=False, description="是否为页面默认选中的学期")

@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 QZ = ROOT / "tests" / "fixtures" / "qiangzhi"
 ZF = ROOT / "tests" / "fixtures" / "zfsoft_v9"
 VALID_COOKIE = "FAKE-MOCK-SESSION"
+EXPIRED_JSON = '{"flag1":2,"msgContent":"请先登录系统"}'.encode()
 
 QZ_BASE = "/jsxsd/"
 ZF_BASE = "/jwglxt/"
@@ -102,6 +103,10 @@ def make_handler(state: State, vendor: str) -> type[BaseHTTPRequestHandler]:
             route = routes.get(path)
             if route is None:
                 self._send(404, b"not found", "text/plain")
+                return
+            if "FAKE-EXPIRED-JSON" in self.headers.get("Cookie", ""):
+                # 强智会话过期时的另一种形态：HTTP 200 + JSON
+                self._send(200, EXPIRED_JSON, "application/json;charset=UTF-8")
                 return
             if not self._cookie_ok():
                 self._send(302, b"", "text/html", {"Location": login_path})

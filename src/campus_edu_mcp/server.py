@@ -17,9 +17,10 @@ from .service import Service
 logger = logging.getLogger(__name__)
 
 INSTRUCTIONS = (
-    "这是只读的高校教务助手（默认强智 jsxsd；正方 V9 适配器可用但未做 live 实测）。"
-    "只能查询用户本人的课表、考试安排和成绩，不能做任何修改。"
+    "这是只读的高校教务助手（默认强智 jsxsd；正方 V9 适配器未做 live 实测，默认禁用）。"
+    "只能查询用户本人的课表、考试安排、成绩和学期列表，不能做任何修改。"
     "成绩默认返回课程、学分、课程性质、是否通过；只有用户明确想知道分数时才传 include_scores=true。"
+    "结果中的 meta.status 为 pending/stale 时，请提醒用户该功能尚未在真实学校充分验证。"
     "如果提示会话缺失或失效，请让用户自己在终端导入 Cookie，不要向用户索要 Cookie 或密码。"
 )
 READ_ONLY = ToolAnnotations(
@@ -68,6 +69,11 @@ def build_server(service: Service | None = None) -> MCPServer:
         year 与 term 都不填则返回全部学期。返回的数据会进入模型上下文。
         """
         return _safe(svc.grades, year, term, include_scores)
+
+    @mcp.tool(annotations=READ_ONLY)
+    def get_terms() -> dict[str, Any]:
+        """列出教务系统可选的学期（current=true 为系统默认学期）。已在一所强智校只读实测。"""
+        return _safe(svc.terms)
 
     @mcp.tool(annotations=READ_ONLY)
     def session_status() -> dict[str, Any]:

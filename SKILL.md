@@ -12,7 +12,9 @@ description: 通过只读的 campus-edu-mcp 查询用户本人的课表、考试
 - `get_timetable(year?, term?)`：课表。`weekday` 1=周一；`sessions` 是节次；`weeks` 是上课周。
 - `get_exams(year?, term?)`：考试安排。
 - `get_grades(year?, term?, include_scores=false)`：成绩，默认返回课程、学分、课程性质、是否通过。
+- `get_terms()`：列出可选学期。
 - `session_status()`：检查会话。
+- 结果 `meta.status` 为 pending/stale 时提醒用户该功能未充分验证。
 
 `year` 是学年**起始年**（2025-2026 学年填 2025），`term` 1=第一学期 2=第二学期 3=小学期；不确定就不填。
 

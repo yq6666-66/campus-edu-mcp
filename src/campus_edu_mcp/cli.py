@@ -44,6 +44,12 @@ def _parser() -> argparse.ArgumentParser:
     src.add_argument("--from-env", action="store_true", help="从环境变量 CAMPUS_EDU_COOKIE 读取")
     sub.add_parser("session-status", help="检查会话是否有效")
     sub.add_parser("clear-session", help="删除本地保存的会话与密钥")
+    e = sub.add_parser("export-ics", help="（实验性）把课表导出为 .ics 日历文件")
+    e.add_argument("--term-start", required=True, help="第 1 周任意一天，YYYY-MM-DD")
+    e.add_argument("--periods", required=True, type=Path, help="作息时间 JSON 文件")
+    e.add_argument("--out", required=True, type=Path, help="输出 .ics 路径")
+    e.add_argument("--year", type=int, default=None)
+    e.add_argument("--term", type=int, default=None)
     return p
 
 
@@ -64,6 +70,29 @@ def _import_session(args: argparse.Namespace) -> int:
     path = store.save(cookies, host=host)
     print(f"已导入 {len(cookies)} 个 Cookie，加密保存到 {path}")
     print("可以删除原始 Cookie 文件了。运行 campus-edu-mcp session-status 检查是否有效。")
+    return 0
+
+
+def _export_ics(args: argparse.Namespace) -> int:
+    import datetime as dt
+
+    from .ics import build_ics, load_periods
+    from .models import Course
+
+    try:
+        start = dt.date.fromisoformat(args.term_start)
+    except ValueError as exc:
+        raise ConfigError("--term-start 格式应为 YYYY-MM-DD") from exc
+    periods = load_periods(args.periods)
+    result = Service().timetable(args.year, args.term)
+    courses = [Course(**c) for c in result["courses"]]
+    text, events, skipped = build_ics(courses, start, periods)
+    try:
+        args.out.write_text(text, "utf-8", newline="")
+    except OSError as exc:
+        raise ConfigError("无法写入输出文件") from exc
+    print(f"已导出 {events} 个日程到 {args.out}（跳过 {skipped} 门无法定位时间的课程）")
+    print("提示：实验性功能，请核对作息时间；文件含课表信息，注意分享范围。")
     return 0
 
 
@@ -103,6 +132,8 @@ def run(argv: Sequence[str] | None = None) -> int:
             status = Service().session_status()
             print(redact(status.message))
             return 0 if status.valid else 1
+        if command == "export-ics":
+            return _export_ics(args)
         if command == "clear-session":
             removed = SessionStore().clear()
             print("已删除本地会话。" if removed else "本地没有保存的会话。")

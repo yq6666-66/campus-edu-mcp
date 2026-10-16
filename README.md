@@ -3,7 +3,7 @@
 > 只读的高校教务 MCP 服务：让 AI 回答「我明天几点上课」「下周有什么考试」「上学期挂科了吗」。
 > **非官方项目，只能查询你本人的账号，永远不做选课、退课、评教等任何写操作。**
 
-当前版本 v0.1.0（未发布）。**默认适配强智教务（jsxsd）**；正方 V9 适配器仍保留但未实测。
+当前版本 v0.2.0（本地开发中）。**默认适配强智教务（jsxsd）**；正方 V9 适配器仍保留但未实测。
 
 示例学校配置见 `schools/example-qiangzhi.yaml`（请改成你自己学校的 `base_url`）。
 强智适配器已在**一所强智校**做过只读 live 验证（课表 / 成绩，2026-10-16）；考试路径因校而异，有实际考试数据时的解析尚未验证。正方 V9 未做 live 实测。
@@ -17,9 +17,12 @@
 | `get_timetable(year?, term?)` | 本人课表 |
 | `get_exams(year?, term?)` | 本人考试安排（时间、地点、座位号） |
 | `get_grades(year?, term?, include_scores=false)` | 成绩。**默认只返回课程、学分、课程性质、是否通过**；`include_scores=true` 才返回分数和绩点 |
+| `get_terms()` | 列出教务系统可选学期（已在一所强智校只读实测） |
 | `session_status()` | 会话是否已导入、是否仍有效（不返回任何 Cookie） |
 
 `year` 是学年起始年（2025 表示 2025-2026 学年），`term` 为 1/2/3，不填则按日期推断当前学期。
+每个结果带 `meta`（`status`: verified / stale / pending）。正方 V9 默认禁用，需 `CAMPUS_EDU_ALLOW_UNVERIFIED=1`。实验性 CLI：`campus-edu-mcp export-ics --term-start YYYY-MM-DD --periods 作息.json --out kb.ics`（作息时间需自己提供）。
+
 课表 / 考试 / 成绩结果都**不含学号、姓名、排名**，并附带 `privacy_notice`（`session_status` 不含该字段）。
 
 ## ⚠️ 隐私：云端模型会收到查询结果

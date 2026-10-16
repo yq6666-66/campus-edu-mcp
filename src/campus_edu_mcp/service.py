@@ -17,6 +17,7 @@ from .errors import ConfigError, ProjectError, SessionExpired, SessionMissing
 from .guard import GuardedClient
 from .models import PRIVACY_NOTICE, GradeSummary, SessionStatus, Term
 from .storage import Config, SessionStore, load_config
+from .verification import ALLOW_UNVERIFIED_ENV, UNVERIFIED_VENDORS, meta
 
 
 class _AdapterFactory(Protocol):
@@ -78,12 +79,19 @@ class Service:
         self._config = config
         self._cookies_loader = cookies_loader or load_cookies
         self._transport = transport
+        self._vendor = config.vendor if config else "qiangzhi"
 
     def _adapter(self) -> tuple[Any, GuardedClient]:
         config = self._config or load_config()
         adapter_cls = ADAPTERS.get(config.vendor)
         if adapter_cls is None:
             raise ConfigError(f"不支持的厂商 {config.vendor}")
+        if config.vendor in UNVERIFIED_VENDORS and os.environ.get(ALLOW_UNVERIFIED_ENV) != "1":
+            raise ConfigError(
+                f"厂商 {config.vendor} 的适配器尚未做 live 实测，默认禁用；"
+                f"确认要试用请设置环境变量 {ALLOW_UNVERIFIED_ENV}=1"
+            )
+        self._vendor = config.vendor
         host = httpx.URL(config.base_url).host
         cookies = self._cookies_loader(host)
         if not cookies:
@@ -118,6 +126,7 @@ class Service:
         return {
             "term": t.model_dump(),
             "courses": [c.model_dump() for c in courses],
+            "meta": meta(self._vendor, "timetable"),
             "privacy_notice": PRIVACY_NOTICE,
         }
 
@@ -127,6 +136,21 @@ class Service:
         return {
             "term": t.model_dump(),
             "exams": [e.model_dump() for e in exams],
+            "meta": meta(self._vendor, "exams"),
+            "privacy_notice": PRIVACY_NOTICE,
+        }
+
+    def terms(self) -> dict[str, Any]:
+        def call(adapter: Any) -> Any:
+            fn = getattr(adapter, "terms", None)
+            if fn is None:
+                raise ConfigError(f"厂商 {self._vendor} 暂不支持查询学期列表")
+            return fn()
+
+        terms = self._run(call)
+        return {
+            "terms": [t.model_dump() for t in terms],
+            "meta": meta(self._vendor, "terms"),
             "privacy_notice": PRIVACY_NOTICE,
         }
 
@@ -146,6 +170,7 @@ class Service:
             "include_scores": include_scores,
             "failed_count": failed,
             "grades": items,
+            "meta": meta(self._vendor, "grades"),
             "privacy_notice": PRIVACY_NOTICE,
         }
 

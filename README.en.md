@@ -10,6 +10,7 @@ The server is built with the official MCP SDK (`mcp` 2.3.0, `MCPServer`, stdio t
   - `get_timetable(year?, term?)` – fetch class timetable.
   - `get_exams(year?, term?)` – fetch exam schedule.
   - `get_grades(year?, term?, include_scores=false)` – fetch grades. By default returns only course name, credits, course nature, and pass/fail status; set `include_scores=true` to also include scores and grade points.
+  - `get_terms()` – list selectable terms (live-verified on one Qiangzhi school).
   - `session_status()` – check whether the imported session is still valid.
 - Every tool result includes a `privacy_notice`.
 - Privacy-preserving: student ID, name, and ranking are never returned.
@@ -26,7 +27,9 @@ The server is built with the official MCP SDK (`mcp` 2.3.0, `MCPServer`, stdio t
 
 ## Status and limitations
 
-- Version: `0.1.0` (Unreleased)
+- Version: `0.2.0` (local development)
+- Every result carries `meta.status` (verified / stale / pending). Zhengfang V9 is disabled unless `CAMPUS_EDU_ALLOW_UNVERIFIED=1`.
+- Experimental CLI: `export-ics --term-start --periods --out` (you supply the period times).
 - License: MIT
 - Python: `>=3.11`
 - Managed with `uv`

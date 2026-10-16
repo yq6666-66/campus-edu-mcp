@@ -68,6 +68,7 @@ async def _session(env: dict[str, str], err_path: Path) -> dict[str, str]:
             tt = await session.call_tool("get_timetable", {"year": 2098, "term": 1})
             out["timetable"] = _text(tt)
             out["timetable_is_error"] = str(bool(getattr(tt, "is_error", False)))
+            out["terms"] = _text(await session.call_tool("get_terms", {}))
             out["exams"] = _text(await session.call_tool("get_exams", {"year": 2098, "term": 1}))
             out["grades"] = _text(await session.call_tool("get_grades", {}))
             out["scores"] = _text(await session.call_tool("get_grades", {"include_scores": True}))
@@ -79,10 +80,13 @@ def test_stdio_end_to_end(mock_school: str, tmp_path: Path) -> None:
     cookie.write_text(f"JSESSIONID={VALID_COOKIE}", "utf-8")
     err = tmp_path / "stderr.txt"
     out = asyncio.run(_session(_env(mock_school, cookie, tmp_path), err))
-    assert out["tools"] == "get_exams,get_grades,get_timetable,session_status", err.read_text()
+    assert out["tools"] == "get_exams,get_grades,get_terms,get_timetable,session_status", (
+        err.read_text()
+    )
     assert "会话有效" in out["status"], out["status"] + "\n" + err.read_text()
     assert len(json.loads(out["timetable"])["courses"]) == 6
     assert len(json.loads(out["exams"])["exams"]) == 4
+    assert [t["current"] for t in json.loads(out["terms"])["terms"]] == [False, True]
     grades = json.loads(out["grades"])
     assert grades["failed_count"] >= 1 and "score" not in grades["grades"][0]
     assert "score" in json.loads(out["scores"])["grades"][0]
@@ -102,3 +106,14 @@ def test_stdio_expired_session(mock_school: str, tmp_path: Path) -> None:
     assert "SessionExpired" in out["timetable"] and "import-session" in out["timetable"]
     assert out["timetable_is_error"] == "True"
     assert "FAKE-EXPIRED" not in json.dumps(out, ensure_ascii=False)
+
+
+def test_stdio_expired_json_session(mock_school: str, tmp_path: Path) -> None:
+    cookie = tmp_path / "cookie.txt"
+    cookie.write_text("JSESSIONID=FAKE-EXPIRED-JSON", "utf-8")
+    err = tmp_path / "stderr.txt"
+    out = asyncio.run(_session(_env(mock_school, cookie, tmp_path), err))
+    assert "会话已失效" in out["status"], out["status"]
+    for key in ("timetable", "terms", "exams", "grades"):
+        assert "SessionExpired" in out[key], (key, out[key])
+    assert "FAKE-EXPIRED-JSON" not in json.dumps(out, ensure_ascii=False)

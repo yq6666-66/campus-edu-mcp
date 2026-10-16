@@ -34,6 +34,11 @@ def fake_school(request: httpx.Request) -> httpx.Response:
     return httpx.Response(404)
 
 
+@pytest.fixture(autouse=True)
+def _allow_unverified(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CAMPUS_EDU_ALLOW_UNVERIFIED", "1")
+
+
 def make_service(cookie: str | None = "FAKE-OK") -> Service:
     return Service(
         Config(base_url=BASE_URL, vendor="zfsoft_v9", min_interval=0),
@@ -131,7 +136,7 @@ def test_mcp_tools_registered_read_only_and_callable() -> None:
     async def go() -> None:
         tools = await server.list_tools()
         names = {t.name for t in tools}
-        assert names == {"get_timetable", "get_exams", "get_grades", "session_status"}
+        assert names == {"get_timetable", "get_exams", "get_grades", "get_terms", "session_status"}
         for tool in tools:
             assert tool.annotations is not None and tool.annotations.read_only_hint is True
             assert "cookie" not in json.dumps(tool.input_schema).lower()

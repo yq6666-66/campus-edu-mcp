@@ -20,6 +20,8 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[No
         "CAMPUS_EDU_COOKIE",
         "CAMPUS_EDU_COOKIE_FILE",
         "CAMPUS_EDU_MIN_INTERVAL",
+        "CAMPUS_EDU_ALLOW_UNVERIFIED",
+        "CAMPUS_EDU_VENDOR",
     ):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("CAMPUS_EDU_DATA_DIR", str(tmp_path / "data"))

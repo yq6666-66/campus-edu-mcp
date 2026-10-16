@@ -22,10 +22,11 @@ from ..htmlutil import (
     has_kb_table,
     looks_like_login,
     parse_kbcontent_blocks,
+    select_options,
     selected_option,
     table_rows,
 )
-from ..models import Course, Exam, ScoreDetail, Term
+from ..models import Course, Exam, ScoreDetail, Term, TermOption
 
 _TERM_ID = r"20\d{2}-20\d{2}-[123]"
 _PARAM_TOKEN = r"[A-Za-z0-9_]{0,40}"  # noqa: S105
@@ -149,6 +150,25 @@ class QiangzhiAdapter:
         except SessionExpired:
             return False
         return True
+
+    def terms(self) -> list[TermOption]:
+        """从课表页的 ``xnxq01id`` 下拉框读取可选学期（只读 GET，复用课表白名单）。"""
+        html = self._request("GET", TIMETABLE_PATH, {})
+        options = select_options(html, "xnxq01id")
+        if not options:
+            raise UpstreamError("课表页缺少学期下拉框 xnxq01id，页面结构可能已变更")
+        result: list[TermOption] = []
+        seen: set[str] = set()
+        for value, label, selected in options:
+            if value in seen or not re.fullmatch(_TERM_ID, value):
+                continue
+            seen.add(value)
+            start, _end, num = value.split("-")
+            result.append(
+                TermOption(year=int(start), term=int(num), label=label or value, current=selected)
+            )
+        result.sort(key=lambda t: (t.year, t.term), reverse=True)
+        return result
 
     def timetable(self, term: Term) -> list[Course]:
         # 先 GET 拿当前页（许多学校不带参数即当前学期），再按需 POST 切换学期。

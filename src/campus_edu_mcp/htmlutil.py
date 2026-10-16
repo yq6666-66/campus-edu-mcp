@@ -304,7 +304,14 @@ def parse_kbcontent_blocks(html_text: str) -> list[dict[str, str | int | None]]:
     return parser.courses
 
 
+_JSON_LOGIN_FLAG = re.compile(r'"flag1"\s*:\s*"?2"?')
+
+
 def looks_like_login(html_text: str) -> bool:
+    """识别登录页，以及强智会话过期时返回的 JSON（``{"flag1":2,...请先登录系统}``）。"""
+    head = html_text.lstrip()[:4000]
+    if head.startswith("{") and ("请先登录" in head or _JSON_LOGIN_FLAG.search(head)):
+        return True
     markers = (
         'name="loginForm"',
         "LoginToXk",
@@ -313,6 +320,7 @@ def looks_like_login(html_text: str) -> bool:
         ">用户登录<",
         ">登录</title>",
         'name="RANDOMCODE"',
+        "请先登录系统",
     )
     low = html_text[:4000]
     return any(m in low for m in markers)
@@ -333,3 +341,23 @@ def selected_option(html_text: str, select_name: str) -> str | None:
         return selected.group(1)
     first = re.search(r'<option[^>]*value=["\']([^"\']+)["\']', match.group(1), re.I)
     return first.group(1) if first else None
+
+
+def select_options(html_text: str, select_name: str) -> list[tuple[str, str, bool]]:
+    """返回某个 ``<select>`` 的全部选项 ``(value, label, selected)``，找不到则为空列表。"""
+    pattern = re.compile(
+        rf'<select[^>]*name=["\']{re.escape(select_name)}["\'][^>]*>(.*?)</select>',
+        re.I | re.S,
+    )
+    match = pattern.search(html_text)
+    if not match:
+        return []
+    options = []
+    for opt in re.finditer(r"<option([^>]*)>(.*?)(?=<option|$)", match.group(1), re.I | re.S):
+        attrs, label = opt.group(1), opt.group(2)
+        value = re.search(r'value=["\']([^"\']*)["\']', attrs, re.I)
+        if not value:
+            continue
+        text = _strip_tags(re.sub(r"</option>.*", "", label, flags=re.I | re.S)).strip()
+        options.append((value.group(1), text, bool(re.search(r"\bselected\b", attrs, re.I))))
+    return options

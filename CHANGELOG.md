@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-10-16
+
+### Fixed
+
+- Qiangzhi: an expired session answered with HTTP 200 JSON (`{"flag1":2,"msgContent":"请先登录系统"}`) was treated as a normal page; it now raises `SessionExpired` with the re-import hint (fixture `expired_json.json`, unit + stdio e2e tests).
+
+### Added
+
+- `get_terms()` tool (Qiangzhi): reads the `xnxq01id` term select on the timetable page via the existing whitelisted GET. Live-verified read-only on one Qiangzhi school (2026-10-16).
+- `meta` block on every data tool result: `vendor`, `endpoint`, `status` (`verified` / `stale` after 183 days / `pending`), `last_verified`.
+- Experimental CLI `export-ics --term-start --periods --out [--year --term]`: RFC 5545 export with user-supplied period times; not covered by semver.
+
+### Changed
+
+- Zhengfang V9 adapter is disabled unless `CAMPUS_EDU_ALLOW_UNVERIFIED=1` (it has never been live-verified). **Migration:** zfsoft users set this variable.
+
 ## [0.1.0] - 2026-10-16
 
 ### Added
