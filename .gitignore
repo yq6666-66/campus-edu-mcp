@@ -18,3 +18,6 @@ session.enc
 campus-edu-mcp-v0.1.0.tar.gz
 *.tmp
 session.tmp
+
+# DeepSeek review artifacts (kept outside the published tree)
+deepseek-raw/
