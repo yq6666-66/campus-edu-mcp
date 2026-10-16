@@ -1,11 +1,11 @@
 [project]
 name = "campus-edu-mcp"
 version = "0.1.0"
-description = "只读的高校教务 MCP 服务（课表、考试、成绩），当前适配正方 V9"
+description = "只读的高校教务 MCP 服务（课表、考试、成绩），默认强智 jsxsd，可选正方 V9"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "campus-edu-mcp contributors" }]
-keywords = ["mcp", "zfsoft", "education", "read-only"]
+keywords = ["mcp", "qiangzhi", "zfsoft", "education", "read-only"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",

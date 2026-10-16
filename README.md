@@ -70,6 +70,8 @@ Codex CLI 可以用：`codex mcp add campus-edu -- uv --directory C:\path\to\cam
 
 会话过期后，工具会提示重新导入；重复第 2 步即可。**不要把 Cookie 发给 AI。**
 
+> Windows：会话加密文件写在 `%APPDATA%\campus-edu-mcp\`。多用户共享同一 Windows 账号时，请自行评估本机权限；本项目不额外配置 NTFS ACL。
+
 ### 没有账号也能试：mock 教务
 
 ```powershell

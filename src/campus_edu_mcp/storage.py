@@ -30,11 +30,14 @@ def data_dir() -> Path:
     if override:
         return Path(override)
     if sys.platform == "win32":
-        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+        # 空字符串也要回退，避免写到进程当前目录
+        appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
+        base = Path(appdata)
     elif sys.platform == "darwin":
         base = Path.home() / "Library" / "Application Support"
     else:
-        base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+        xdg = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+        base = Path(xdg)
     return base / SERVICE
 
 

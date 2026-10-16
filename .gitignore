@@ -16,3 +16,5 @@ cookie*.txt
 mock-cookie.txt
 session.enc
 campus-edu-mcp-v0.1.0.tar.gz
+*.tmp
+session.tmp

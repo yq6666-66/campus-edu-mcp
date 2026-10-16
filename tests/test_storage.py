@@ -127,3 +127,22 @@ def test_session_legacy_format_still_loads(tmp_path: Path) -> None:
     token = Fernet(key.encode()).encrypt(b'{"JSESSIONID": "FAKE-LEGACY"}')
     store.path.write_bytes(token)
     assert store.load(host="jw.example.edu.cn") == {"JSESSIONID": "FAKE-LEGACY"}
+
+
+def test_data_dir_ignores_empty_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.delenv("CAMPUS_EDU_DATA_DIR", raising=False)
+    monkeypatch.setenv("XDG_DATA_HOME", "")
+    monkeypatch.setenv("APPDATA", "")
+    d = data_dir()
+    assert d.name == "campus-edu-mcp"
+    # 不得落到相对当前目录
+    assert d.is_absolute()
+
+
+def test_data_dir_windows_and_darwin(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("CAMPUS_EDU_DATA_DIR", raising=False)
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setenv("APPDATA", str(Path("/tmp/win-appdata")))
+    assert data_dir() == Path("/tmp/win-appdata") / "campus-edu-mcp"
+    monkeypatch.setattr(sys, "platform", "darwin")
+    assert "Application Support" in str(data_dir())
