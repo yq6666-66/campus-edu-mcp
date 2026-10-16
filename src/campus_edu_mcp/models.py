@@ -52,7 +52,7 @@ class ScoreDetail(GradeSummary):
 
 
 class Term(_Base):
-    year: int = Field(description="学年起始年，如 2025 表示 2025-2026 学年")
+    year: int = Field(ge=2000, le=2100, description="学年起始年，如 2025 表示 2025-2026 学年")
     term: int = Field(ge=1, le=3, description="1=第一学期 2=第二学期 3=小学期")
 
 

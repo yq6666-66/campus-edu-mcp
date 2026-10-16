@@ -7,6 +7,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+from mcp.server.mcpserver.exceptions import ToolError
 
 from campus_edu_mcp.adapters.zfsoft_v9 import RULES
 from campus_edu_mcp.errors import ConfigError, SessionExpired, SessionMissing
@@ -143,9 +144,32 @@ def test_mcp_tools_registered_read_only_and_callable() -> None:
 def test_mcp_tool_error_is_redacted() -> None:
     server = build_server(make_service("FAKE-OLD"))
 
-    async def go() -> str:
-        return str(await server.call_tool("get_exams", {"year": 2098, "term": 1}))
+    async def go() -> None:
+        with pytest.raises(ToolError, match="SessionExpired") as caught:
+            await server.call_tool("get_exams", {"year": 2098, "term": 1})
+        assert "FAKE-OLD" not in str(caught.value)
 
-    out = asyncio.run(go())
-    assert "SessionExpired" in out and "FAKE-OLD" not in out
+    asyncio.run(go())
     assert RULES  # 白名单非空
+
+
+def test_mcp_tool_marks_session_missing_as_error() -> None:
+    server = build_server(make_service(None))
+
+    async def go() -> None:
+        with pytest.raises(ToolError, match="SessionMissing"):
+            await server.call_tool("get_timetable", {})
+
+    asyncio.run(go())
+
+
+def test_term_year_bounds() -> None:
+    from pydantic import ValidationError
+
+    from campus_edu_mcp.models import Term
+
+    with pytest.raises(ValidationError):
+        Term(year=1999, term=1)
+    with pytest.raises(ValidationError):
+        Term(year=2101, term=1)
+    assert Term(year=2098, term=1).year == 2098

@@ -7,7 +7,7 @@
 
 一所强智高校（[jw.example.edu.cn](https://jw.example.edu.cn/Logon.do?method=logon)）公开登录页显示为湖南强智科技，
 配置见 `schools/example-qiangzhi.yaml`。课表 / 成绩路径有较充分的公开资料；**考试安排路径尚未在本校核实**。
-所有适配器都还没拿真实 Cookie 做过 live 验证。
+强智适配器已在一所强智高校用真实会话做过只读 live 验证（课表 / 成绩）；考试路径仍可能因校而异。正方 V9 未做 live 实测。
 
 ## 功能
 
@@ -21,7 +21,7 @@
 | `session_status()` | 会话是否已导入、是否仍有效（不返回任何 Cookie） |
 
 `year` 是学年起始年（2025 表示 2025-2026 学年），`term` 为 1/2/3，不填则按日期推断当前学期。
-所有结果都**不含学号、姓名、排名**，并附带 `privacy_notice`。
+课表 / 考试 / 成绩结果都**不含学号、姓名、排名**，并附带 `privacy_notice`（`session_status` 不含该字段）。
 
 ## ⚠️ 隐私：云端模型会收到查询结果
 

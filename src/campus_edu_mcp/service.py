@@ -28,6 +28,7 @@ class _AdapterFactory(Protocol):
 
 
 ADAPTERS: dict[str, Any] = {"qiangzhi": QiangzhiAdapter, "zfsoft_v9": ZfsoftV9Adapter}
+IMPORT_HINT = "请在终端运行 `campus-edu-mcp import-session --cookie-file <文件>` 导入会话。"
 REIMPORT_HINT = "请在终端运行 `campus-edu-mcp import-session --cookie-file <文件>` 重新导入。"
 
 
@@ -86,7 +87,7 @@ class Service:
         host = httpx.URL(config.base_url).host
         cookies = self._cookies_loader(host)
         if not cookies:
-            raise SessionMissing("尚未导入会话。" + REIMPORT_HINT)
+            raise SessionMissing("尚未导入会话。" + IMPORT_HINT)
         markers = getattr(adapter_cls, "login_markers", ("login_slogin", "/cas/login", "/login"))
         client = GuardedClient(
             config.base_url,
@@ -154,7 +155,7 @@ class Service:
         try:
             adapter, client = self._adapter()
         except SessionMissing:
-            return SessionStatus(imported=False, message="尚未导入会话。" + REIMPORT_HINT)
+            return SessionStatus(imported=False, message="尚未导入会话。" + IMPORT_HINT)
         except ProjectError as exc:
             return SessionStatus(imported=False, message=redact(str(exc)))
         try:

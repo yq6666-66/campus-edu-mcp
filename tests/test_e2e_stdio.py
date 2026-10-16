@@ -65,9 +65,9 @@ async def _session(env: dict[str, str], err_path: Path) -> dict[str, str]:
             tools = await session.list_tools()
             out["tools"] = ",".join(sorted(t.name for t in tools.tools))
             out["status"] = _text(await session.call_tool("session_status", {}))
-            out["timetable"] = _text(
-                await session.call_tool("get_timetable", {"year": 2098, "term": 1})
-            )
+            tt = await session.call_tool("get_timetable", {"year": 2098, "term": 1})
+            out["timetable"] = _text(tt)
+            out["timetable_is_error"] = str(bool(getattr(tt, "is_error", False)))
             out["exams"] = _text(await session.call_tool("get_exams", {"year": 2098, "term": 1}))
             out["grades"] = _text(await session.call_tool("get_grades", {}))
             out["scores"] = _text(await session.call_tool("get_grades", {"include_scores": True}))
@@ -100,4 +100,5 @@ def test_stdio_expired_session(mock_school: str, tmp_path: Path) -> None:
     out = asyncio.run(_session(_env(mock_school, cookie, tmp_path), err))
     assert "会话已失效" in out["status"] or "SessionExpired" in out["status"], out["status"]
     assert "SessionExpired" in out["timetable"] and "import-session" in out["timetable"]
+    assert out["timetable_is_error"] == "True"
     assert "FAKE-EXPIRED" not in json.dumps(out, ensure_ascii=False)

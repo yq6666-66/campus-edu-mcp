@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from mcp.server import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
 from . import __version__
@@ -12,11 +14,13 @@ from .errors import ProjectError
 from .redact import redact
 from .service import Service
 
+logger = logging.getLogger(__name__)
+
 INSTRUCTIONS = (
-    "这是只读的高校教务助手（默认强智 jsxsd，可选正方 V9）。"
+    "这是只读的高校教务助手（默认强智 jsxsd；正方 V9 适配器可用但未做 live 实测）。"
     "只能查询用户本人的课表、考试安排和成绩，不能做任何修改。"
-    "成绩默认只给出是否通过和学分；只有用户明确想知道分数时才传 include_scores=true。"
-    "如果提示会话失效，请让用户自己在终端重新导入 Cookie，不要向用户索要 Cookie 或密码。"
+    "成绩默认返回课程、学分、课程性质、是否通过；只有用户明确想知道分数时才传 include_scores=true。"
+    "如果提示会话缺失或失效，请让用户自己在终端导入 Cookie，不要向用户索要 Cookie 或密码。"
 )
 READ_ONLY = ToolAnnotations(
     read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=True
@@ -24,11 +28,15 @@ READ_ONLY = ToolAnnotations(
 
 
 def _safe(fn: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    """执行业务函数；失败时抛出 ToolError，使 MCP 结果带 isError=true。"""
     try:
         result: dict[str, Any] = fn(*args, **kwargs)
         return result
     except ProjectError as exc:
-        return {"error": type(exc).__name__, "message": redact(str(exc))}
+        raise ToolError(f"{type(exc).__name__}: {redact(str(exc))}") from exc
+    except Exception:
+        logger.exception("工具执行出现未预期错误")
+        raise ToolError("服务内部错误，请查看本机日志或重试") from None
 
 
 def build_server(service: Service | None = None) -> MCPServer:
@@ -54,8 +62,11 @@ def build_server(service: Service | None = None) -> MCPServer:
     def get_grades(
         year: int | None = None, term: int | None = None, include_scores: bool = False
     ) -> dict[str, Any]:
-        """查询本人成绩。默认只返回课程、学分、是否通过；include_scores=true 时才返回分数和绩点。
-        year 与 term 都不填则返回全部学期。返回的数据会进入你所用模型的上下文。"""
+        """查询本人成绩。
+
+        默认返回课程、学分、课程性质、是否通过；include_scores=true 时才返回分数和绩点。
+        year 与 term 都不填则返回全部学期。返回的数据会进入模型上下文。
+        """
         return _safe(svc.grades, year, term, include_scores)
 
     @mcp.tool(annotations=READ_ONLY)
