@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-16
 
 ### Added
 
@@ -32,9 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limitations
 
-- Qiangzhi exam path (`xsks/xsksap_list`) and a Qiangzhi school post-login entry are not live-verified; timetable/grades paths are based on multi-school public docs.
-- Not yet validated against a real school deployment; endpoint paths and field names are based on public descriptions of zfsoft V9 and fictional fixtures.
-- Not published to PyPI; install from a local clone.
+- a Qiangzhi school (Qiangzhi) timetable and grades verified live read-only on 2026-10-16; exam path returned empty placeholder that day — parsing with non-empty exam data is unverified.
+- Zhengfang V9 adapter is retained but **not** live-verified.
+- Not published to PyPI; install from a local clone / GitHub Release source archive.
+- Tool results may be sent to cloud model providers when used with hosted AI clients (see `privacy_notice`).
 
 ### Security
 
