@@ -1,7 +1,8 @@
 """实验性：把课表导出为 iCalendar（RFC 5545）。
 
 作息时间因校而异，**必须由用户提供**（JSON：``{"1": ["08:00", "08:45"], ...}``），
-本模块不内置任何学校的作息。生成的时间为本地浮动时间（不带时区）。
+本模块不内置任何学校的作息。生成的时间为本地浮动时间（不带时区）：导入到
+与学校不同时区的设备时会按设备本地时间显示，跨时区使用前请自行调整。
 """
 
 from __future__ import annotations
@@ -63,10 +64,12 @@ def parse_weeks(text: str | None) -> list[int]:
 
 
 def parse_sessions(text: str | None) -> tuple[int, int] | None:
-    nums = [int(n) for n in re.findall(r"\d{1,2}", text or "")]
-    if not nums:
+    """``[01-02]节`` / ``第3-4节`` / ``5节`` → (起, 止)；只取第一个节次片段，忽略后面的周次。"""
+    m = re.search(r"(\d{1,2})(?:\s*[-—~]\s*(\d{1,2}))?", text or "")
+    if not m:
         return None
-    return min(nums), max(nums)
+    a, b = int(m.group(1)), int(m.group(2) or m.group(1))
+    return min(a, b), max(a, b)
 
 
 def _escape(text: str) -> str:

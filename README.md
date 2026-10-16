@@ -21,7 +21,7 @@
 | `session_status()` | 会话是否已导入、是否仍有效（不返回任何 Cookie） |
 
 `year` 是学年起始年（2025 表示 2025-2026 学年），`term` 为 1/2/3，不填则按日期推断当前学期。
-每个结果带 `meta`（`status`: verified / stale / pending）。正方 V9 默认禁用，需 `CAMPUS_EDU_ALLOW_UNVERIFIED=1`。实验性 CLI：`campus-edu-mcp export-ics --term-start YYYY-MM-DD --periods 作息.json --out kb.ics`（作息时间需自己提供）。
+每个数据工具结果带 `meta`（`status`: verified / stale / pending）。正方 V9 默认禁用，需 `CAMPUS_EDU_ALLOW_UNVERIFIED=1`。实验性 CLI：`campus-edu-mcp export-ics --term-start YYYY-MM-DD --periods 作息.json --out kb.ics`（作息时间需自己提供；时间为不带时区的本地时间）。
 
 课表 / 考试 / 成绩结果都**不含学号、姓名、排名**，并附带 `privacy_notice`（`session_status` 不含该字段）。
 

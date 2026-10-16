@@ -17,7 +17,7 @@ STALE_AFTER_DAYS = 183
 VERIFIED_ON: dict[str, dict[str, str | None]] = {
     "qiangzhi": {
         "timetable": "2026-10-16",
-        "exams": "2026-10-16",
+        "exams": None,  # 仅实测过「无考试」页面，有数据时的解析未实测
         "grades": "2026-10-16",
         "session_status": "2026-10-16",
         "terms": "2026-10-16",

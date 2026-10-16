@@ -304,13 +304,13 @@ def parse_kbcontent_blocks(html_text: str) -> list[dict[str, str | int | None]]:
     return parser.courses
 
 
-_JSON_LOGIN_FLAG = re.compile(r'"flag1"\s*:\s*"?2"?')
+_JSON_LOGIN_MSG = re.compile(r'"msgContent"\s*:\s*"[^"]*(?:请先登录|登录超时|重新登录)')
 
 
 def looks_like_login(html_text: str) -> bool:
     """识别登录页，以及强智会话过期时返回的 JSON（``{"flag1":2,...请先登录系统}``）。"""
     head = html_text.lstrip()[:4000]
-    if head.startswith("{") and ("请先登录" in head or _JSON_LOGIN_FLAG.search(head)):
+    if head.startswith("{") and _JSON_LOGIN_MSG.search(head):
         return True
     markers = (
         'name="loginForm"',

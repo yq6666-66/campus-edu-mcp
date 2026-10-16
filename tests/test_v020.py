@@ -50,7 +50,7 @@ def _qz_service(handler: httpx.MockTransport) -> Service:
     "text",
     [
         '{"flag1":2,"msgContent":"请先登录系统"}',
-        '  {"flag1": "2", "msgContent": "x"}',
+        '  {"flag1": "2", "msgContent": "登录超时，请重新登录"}',
         '{"msgContent":"请先登录系统"}',
     ],
 )
@@ -58,8 +58,12 @@ def test_expired_json_detected(text: str) -> None:
     assert looks_like_login(text)
 
 
-def test_normal_json_not_login() -> None:
-    assert not looks_like_login('{"flag1":1,"data":[]}')
+@pytest.mark.parametrize(
+    "text",
+    ['{"flag1":1,"data":[]}', '{"flag1":2,"msgContent":"参数错误"}', '{"note":"请先登录系统"}'],
+)
+def test_other_json_not_login(text: str) -> None:
+    assert not looks_like_login(text)
 
 
 @respx.mock
@@ -216,6 +220,7 @@ def test_parse_sessions() -> None:
     assert parse_sessions("[01-02]节") == (1, 2)
     assert parse_sessions("第3-4节") == (3, 4)
     assert parse_sessions(None) is None
+    assert parse_sessions("1-2节(1-8周)") == (1, 2)
 
 
 def _periods(tmp_path: Path, data: object) -> Path:

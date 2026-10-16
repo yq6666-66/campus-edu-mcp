@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `get_terms()` tool (Qiangzhi): reads the `xnxq01id` term select on the timetable page via the existing whitelisted GET. Live-verified read-only on one Qiangzhi school (2026-10-16).
-- `meta` block on every data tool result: `vendor`, `endpoint`, `status` (`verified` / `stale` after 183 days / `pending`), `last_verified`.
+- `meta` block on every data tool result (not on `session_status`): `vendor`, `endpoint`, `status` (`verified` / `stale` after 183 days / `pending`), `last_verified`. Qiangzhi exams stay `pending` (only the empty-exam page was live-checked).
 - Experimental CLI `export-ics --term-start --periods --out [--year --term]`: RFC 5545 export with user-supplied period times; not covered by semver.
 
 ### Changed
