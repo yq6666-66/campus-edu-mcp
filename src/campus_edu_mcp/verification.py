@@ -21,7 +21,7 @@ VERIFIED_ON: dict[str, dict[str, str | None]] = {
         "grades": "2026-10-16",
         "session_status": "2026-10-16",
         "terms": "2026-10-16",
-        "empty_classrooms": None,
+        "empty_classrooms": "2026-10-16",
         "password_login": None,
     },
     "zfsoft_v9": {

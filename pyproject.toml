@@ -1,6 +1,6 @@
 [project]
 name = "campus-edu-mcp"
-version = "0.2.0"
+version = "0.3.0"
 description = "只读的高校教务 MCP 服务（课表、考试、成绩），默认强智 jsxsd，可选正方 V9"
 license = "MIT"
 license-files = ["LICENSE"]

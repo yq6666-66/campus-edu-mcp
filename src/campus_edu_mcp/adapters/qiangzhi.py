@@ -20,13 +20,15 @@ from ..gradesutil import judge_passed
 from ..guard import GuardedClient, Rule
 from ..htmlutil import (
     has_kb_table,
+    input_value,
     looks_like_login,
     parse_kbcontent_blocks,
+    parse_room_grid,
     select_options,
     selected_option,
     table_rows,
 )
-from ..models import Course, Exam, ScoreDetail, Term, TermOption
+from ..models import ClassPeriod, Course, Exam, FreeRoom, ScoreDetail, Term, TermOption
 
 _TERM_ID = r"20\d{2}-20\d{2}-[123]"
 _PARAM_TOKEN = r"[A-Za-z0-9_]{0,40}"  # noqa: S105
@@ -35,6 +37,9 @@ _TEXT = r"[\w\u4e00-\u9fff%+.\-]{0,40}"
 TIMETABLE_PATH = "xskb/xskb_list.do"
 GRADES_PATHS = ("kscj/cjcx_list", "kscj/cjcx_list.do")
 EXAMS_PATHS = ("xsks/xsksap_list", "xsks/xsksap_list.do")  # 路径因校而异，需自测
+# 「教室借用」页面只用于查询空闲情况；申请 / 审批 / Ajax 联动等接口一律不登记。
+ROOM_FORM_PATH = "kbxx/jsjy_query"
+ROOM_QUERY_PATH = "kbxx/jsjy_query2"
 
 RULES: Sequence[Rule] = (
     Rule(
@@ -87,6 +92,22 @@ RULES: Sequence[Rule] = (
         )
         for path in EXAMS_PATHS
         for method in ("GET", "POST")
+    ),
+    Rule("GET", ROOM_FORM_PATH, description="教室借用查询页（只读取表单默认值）"),
+    Rule(
+        "POST",
+        ROOM_QUERY_PATH,
+        fixed={"typewhere": frozenset({"jszq"})},
+        free={
+            "xnxqh": _TERM_ID,
+            "kbjcmsid": _PARAM_TOKEN,
+            "xqbh": r"\d{0,4}",
+            "zc": r"\d{1,2}",
+            "zc2": r"\d{1,2}",
+            "xq": r"[1-7]",
+            "xq2": r"[1-7]",
+        },
+        description="教室占用网格查询（只读，单周单日）",
     ),
 )
 
@@ -169,6 +190,46 @@ class QiangzhiAdapter:
             )
         result.sort(key=lambda t: (t.year, t.term), reverse=True)
         return result
+
+    def empty_classrooms(
+        self, term: Term | None, week: int, weekday: int, campus: str | None = None
+    ) -> tuple[list[ClassPeriod], list[FreeRoom]]:
+        """查询某周某天各教室的空闲节次。先 GET 表单页取时间模式，再 POST 查询网格。"""
+        form = self._request("GET", ROOM_FORM_PATH, {})
+        kbjcmsid = selected_option(form, "kbjcmsid")
+        default_term = input_value(form, "xnxqh") or selected_option(form, "xnxqh")
+        if not kbjcmsid:
+            raise UpstreamError("教室查询页缺少时间模式 kbjcmsid，页面结构可能已变更")
+        wanted = term_id(term) if term else default_term
+        if not wanted or not re.fullmatch(_TERM_ID, wanted):
+            raise UpstreamError("无法确定查询学期，请显式传入 year 与 term")
+        data = {
+            "xnxqh": wanted,
+            "typewhere": "jszq",
+            "kbjcmsid": kbjcmsid,
+            "xqbh": campus or "",
+            "zc": str(week),
+            "zc2": str(week),
+            "xq": str(weekday),
+            "xq2": str(weekday),
+        }
+        html = self._request("POST", ROOM_QUERY_PATH, data)
+        periods, rooms = parse_room_grid(html)
+        if not periods:
+            raise UpstreamError("教室查询结果缺少节次表头，页面结构可能已变更")
+        codes = [code for code, _s, _e in periods]
+        result = []
+        for name, capacity, free in rooms:
+            if len(free) != len(codes):
+                continue
+            result.append(
+                FreeRoom(
+                    name=name,
+                    capacity=capacity,
+                    free_periods=[c for c, ok in zip(codes, free, strict=True) if ok],
+                )
+            )
+        return [ClassPeriod(code=c, start=s, end=e) for c, s, e in periods], result
 
     def timetable(self, term: Term) -> list[Course]:
         # 先 GET 拿当前页（许多学校不带参数即当前学期），再按需 POST 切换学期。

@@ -136,7 +136,14 @@ def test_mcp_tools_registered_read_only_and_callable() -> None:
     async def go() -> None:
         tools = await server.list_tools()
         names = {t.name for t in tools}
-        assert names == {"get_timetable", "get_exams", "get_grades", "get_terms", "session_status"}
+        assert names == {
+            "get_timetable",
+            "get_exams",
+            "get_grades",
+            "get_terms",
+            "get_empty_classrooms",
+            "session_status",
+        }
         for tool in tools:
             assert tool.annotations is not None and tool.annotations.read_only_hint is True
             assert "cookie" not in json.dumps(tool.input_schema).lower()

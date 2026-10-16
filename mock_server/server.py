@@ -29,6 +29,8 @@ QZ_ROUTES: dict[str, tuple[str, dict[str, str]]] = {
     QZ_BASE + "kscj/cjcx_list.do": ("grades.html", {}),
     QZ_BASE + "xsks/xsksap_list": ("exams.html", {}),
     QZ_BASE + "xsks/xsksap_list.do": ("exams.html", {}),
+    QZ_BASE + "kbxx/jsjy_query": ("rooms_form.html", {}),
+    QZ_BASE + "kbxx/jsjy_query2": ("rooms_grid.html", {"typewhere": "jszq"}),
 }
 ZF_ROUTES: dict[str, tuple[str, dict[str, str]]] = {
     ZF_BASE + "kbcx/xskbcx_cxXsKb.html": ("timetable.json", {"gnmkdm": "N2151"}),

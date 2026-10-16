@@ -175,7 +175,7 @@ def test_meta_status() -> None:
     today = dt.date(2026, 10, 16)
     assert meta("qiangzhi", "timetable", today)["status"] == "verified"
     assert meta("qiangzhi", "timetable", dt.date(2027, 6, 1))["status"] == "stale"
-    assert meta("qiangzhi", "empty_classrooms", today)["status"] == "pending"
+    assert meta("qiangzhi", "password_login", today)["status"] == "pending"
     assert meta("unknown", "x", today)["last_verified"] is None
     assert status_of("not-a-date") == "pending"
 

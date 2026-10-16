@@ -69,3 +69,15 @@ class TermOption(_Base):
     term: int = Field(ge=1, le=3)
     label: str
     current: bool = Field(default=False, description="是否为页面默认选中的学期")
+
+
+class ClassPeriod(_Base):
+    code: str = Field(description="节次编码，如 0102 表示第 1-2 节")
+    start: str | None = None
+    end: str | None = None
+
+
+class FreeRoom(_Base):
+    name: str
+    capacity: int | None = None
+    free_periods: list[str] = Field(description="该日空闲的节次编码")

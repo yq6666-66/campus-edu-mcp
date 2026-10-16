@@ -35,6 +35,13 @@
 调研时浏览了 MIT 项目 `inannan423/classCrawl`、`tangjiafu430-bot/xiaoai-kebiao-importer` 的路径与结构描述，
 以及 GPL-3.0 的 Dawn-Course（**只看路径名，未使用其代码**）。
 
+## 空闲教室（教室借用查询页，2026-10-16 只读实测）
+
+- `GET /jsxsd/kbxx/jsjy_query`：表单页，含隐藏 `xnxqh`（当前学期）、`kbjcmsid`（时间模式，必填）、校区 `xqbh`、周次 `zc/zc2`、星期 `xq/xq2`、节次 `jc/jc2`、状态 `jszt` 等。
+- `POST /jsxsd/kbxx/jsjy_query2`：`typewhere=jszq` + 上述字段；返回 `#dataList` 网格。表头 `th[tdvalue]` 为节次编码（如 `0102`），带 `tdKssj/tdJssj` 时间；每行一个教室，首格 `名称(容量/考试容量)`，其余格为空表示空闲、有符号（如 ◆ 上课、Ｊ 借用）表示占用。实测只传 `xnxqh/typewhere/kbjcmsid/xqbh/zc/zc2/xq/xq2` 即可。
+- 同页还有 `jsjy_processAjax`（联动下拉）、`jsjy_rqAjax`、`kxjsgl.do` 与「批量借用申请」按钮：**均不登记**。
+- 会话失效时部分接口返回 HTTP 200 JSON：`{"flag1":2,"msgContent":"请先登录系统"}`。
+
 ## 只读 live 验证（2026-10-16，一所强智校）
 
 - 会话 Cookie 有效时，`GET xskb/xskb_list.do` 返回 `#timetable`。

@@ -310,8 +310,8 @@ _JSON_LOGIN_MSG = re.compile(r'"msgContent"\s*:\s*"[^"]*(?:请先登录|登录�
 def looks_like_login(html_text: str) -> bool:
     """识别登录页，以及强智会话过期时返回的 JSON（``{"flag1":2,...请先登录系统}``）。"""
     head = html_text.lstrip()[:4000]
-    if head.startswith("{") and _JSON_LOGIN_MSG.search(head):
-        return True
+    if head.startswith("{"):
+        return bool(_JSON_LOGIN_MSG.search(head))
     markers = (
         'name="loginForm"',
         "LoginToXk",
@@ -361,3 +361,61 @@ def select_options(html_text: str, select_name: str) -> list[tuple[str, str, boo
         text = _strip_tags(re.sub(r"</option>.*", "", label, flags=re.I | re.S)).strip()
         options.append((value.group(1), text, bool(re.search(r"\bselected\b", attrs, re.I))))
     return options
+
+
+_ROOM_LABEL = re.compile(r"^(.*?)\s*[(（]\s*(\d{1,5})(?:\s*/\s*\d{1,5})?\s*[)）]\s*$")
+
+
+def input_value(html_text: str, name: str) -> str | None:
+    """读取 ``<input name=...>`` 的 value（属性顺序不限）。"""
+    for tag in re.finditer(r"<input\b[^>]*>", html_text, re.I):
+        attrs = tag.group(0)
+        if re.search(rf'\bname=["\']{re.escape(name)}["\']', attrs, re.I):
+            value = re.search(r'\bvalue=["\']([^"\']*)["\']', attrs, re.I)
+            return html.unescape(value.group(1)) if value else ""
+    return None
+
+
+def parse_room_grid(
+    html_text: str,
+) -> tuple[list[tuple[str, str | None, str | None]], list[tuple[str, int | None, list[bool]]]]:
+    """解析强智「教室借用」查询结果网格（``#dataList``）。
+
+    返回 ``(节次列表, 教室列表)``：节次为 ``(编码, 开始, 结束)``；
+    教室为 ``(名称, 容量, 每个节次是否空闲)``——单元格为空表示空闲，有占用符号表示不空闲。
+    """
+    start = re.search(r"<table\b[^>]*\bid=[\"']dataList[\"'][^>]*>", html_text, re.I)
+    if not start:
+        return [], []
+    body = html_text[start.end() :]
+    end = re.search(r"</table>", body, re.I)
+    body = body[: end.start()] if end else body
+    periods: list[tuple[str, str | None, str | None]] = []
+    for th in re.finditer(r"<th\b([^>]*\btdvalue=[\"']\d{2,8}[\"'][^>]*)>", body, re.I):
+        attrs = th.group(1)
+        code = re.search(r"\btdvalue=[\"'](\d+)[\"']", attrs, re.I)
+        kssj = re.search(r"\btdKssj=[\"']([0-9:]{4,5})[\"']", attrs, re.I)
+        jssj = re.search(r"\btdJssj=[\"']([0-9:]{4,5})[\"']", attrs, re.I)
+        periods.append(
+            (
+                code.group(1) if code else "",
+                kssj.group(1) if kssj else None,
+                jssj.group(1) if jssj else None,
+            )
+        )
+    rooms: list[tuple[str, int | None, list[bool]]] = []
+    tbody_at = re.search(r"</thead>", body, re.I)
+    rows_html = body[tbody_at.end() :] if tbody_at else body
+    for row in re.split(r"<tr\b", rows_html, flags=re.I)[1:]:
+        cells = re.findall(r"<td\b[^>]*>(.*?)</td>", row, re.I | re.S)
+        if len(cells) < 2:
+            continue
+        label_html = re.search(r"<span[^>]*>(.*?)</span>", cells[0], re.I | re.S)
+        label = _strip_tags(label_html.group(1) if label_html else cells[0])
+        if not label:
+            continue
+        m = _ROOM_LABEL.match(label)
+        name, capacity = (m.group(1).strip(), int(m.group(2))) if m else (label, None)
+        free = [not _strip_tags(c) for c in cells[1:]]
+        rooms.append((name, capacity, free))
+    return periods, rooms

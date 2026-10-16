@@ -154,6 +154,58 @@ class Service:
             "privacy_notice": PRIVACY_NOTICE,
         }
 
+    def empty_classrooms(
+        self,
+        week: int,
+        weekday: int,
+        periods: list[str] | None = None,
+        campus: str | None = None,
+        year: int | None = None,
+        term: int | None = None,
+        min_capacity: int | None = None,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        if not 1 <= week <= 30:
+            raise ConfigError("week 应在 1-30 之间")
+        if not 1 <= weekday <= 7:
+            raise ConfigError("weekday 应在 1-7 之间（1=周一）")
+        if campus is not None and not campus.isdigit():
+            raise ConfigError("campus 应为校区编号（数字）")
+        limit = max(1, min(limit, 200))
+        t = None if year is None and term is None else resolve_term(year, term)
+
+        def call(adapter: Any) -> Any:
+            fn = getattr(adapter, "empty_classrooms", None)
+            if fn is None:
+                raise ConfigError(f"厂商 {self._vendor} 暂不支持空闲教室查询")
+            return fn(t, week, weekday, campus)
+
+        period_list, rooms = self._run(call)
+        known = {p.code for p in period_list}
+        wanted = [p for p in (periods or []) if p]
+        unknown = [p for p in wanted if p not in known]
+        if unknown:
+            raise ConfigError(f"未知节次 {','.join(unknown)}；可选：{','.join(sorted(known))}")
+        matched = [
+            r
+            for r in rooms
+            if all(p in r.free_periods for p in wanted)
+            and (min_capacity is None or (r.capacity or 0) >= min_capacity)
+            and (wanted or r.free_periods)
+        ]
+        matched.sort(key=lambda r: (-len(r.free_periods), r.name))
+        return {
+            "term": t.model_dump() if t else "系统默认学期",
+            "week": week,
+            "weekday": weekday,
+            "periods": [p.model_dump() for p in period_list],
+            "required_free": wanted,
+            "total_matched": len(matched),
+            "rooms": [r.model_dump() for r in matched[:limit]],
+            "truncated": len(matched) > limit,
+            "meta": meta(self._vendor, "empty_classrooms"),
+        }
+
     def grades(
         self, year: int | None = None, term: int | None = None, include_scores: bool = False
     ) -> dict[str, Any]:

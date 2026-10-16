@@ -13,6 +13,7 @@ description: 通过只读的 campus-edu-mcp 查询用户本人的课表、考试
 - `get_exams(year?, term?)`：考试安排。
 - `get_grades(year?, term?, include_scores=false)`：成绩，默认返回课程、学分、课程性质、是否通过。
 - `get_terms()`：列出可选学期。
+- `get_empty_classrooms(week, weekday, periods?)`：空闲教室（只读，不会借用）。
 - `session_status()`：检查会话。
 - 结果 `meta.status` 为 pending/stale 时提醒用户该功能未充分验证。
 

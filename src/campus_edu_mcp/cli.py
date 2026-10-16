@@ -44,6 +44,8 @@ def _parser() -> argparse.ArgumentParser:
     src.add_argument("--from-env", action="store_true", help="从环境变量 CAMPUS_EDU_COOKIE 读取")
     sub.add_parser("session-status", help="检查会话是否有效")
     sub.add_parser("clear-session", help="删除本地保存的会话与密钥")
+    d = sub.add_parser("doctor", help="本地自检（不输出 Cookie）")
+    d.add_argument("--online", action="store_true", help="额外发 1 个只读请求检查会话是否有效")
     e = sub.add_parser("export-ics", help="（实验性）把课表导出为 .ics 日历文件")
     e.add_argument("--term-start", required=True, help="第 1 周任意一天，YYYY-MM-DD")
     e.add_argument("--periods", required=True, type=Path, help="作息时间 JSON 文件")
@@ -132,6 +134,12 @@ def run(argv: Sequence[str] | None = None) -> int:
             status = Service().session_status()
             print(redact(status.message))
             return 0 if status.valid else 1
+        if command == "doctor":
+            from .doctor import render, run_checks
+
+            text, code = render(run_checks(online=args.online))
+            print(text)
+            return code
         if command == "export-ics":
             return _export_ics(args)
         if command == "clear-session":

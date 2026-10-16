@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-16
+
+### Added
+
+- `get_empty_classrooms(week, weekday, periods?, campus?, min_capacity?, year?, term?, limit=50)` (Qiangzhi): `GET kbxx/jsjy_query` reads the time-mode/term defaults, then `POST kbxx/jsjy_query2` (`typewhere=jszq`, single week + single weekday) returns the room-occupancy grid; empty cell = free. Live-verified read-only on one Qiangzhi school (2026-10-16).
+- Guard: only those two requests are whitelisted with strict params; the borrowing/ajax endpoints on the same page (`jsjy_processAjax`, `jsjy_rqAjax`, `kxjsgl.do`, `initJc`, any add/save) stay blocked, with guard tests.
+- `campus-edu-mcp doctor [--online]`: Python, config, https, rate limit, vendor gate, keyring, session sources (presence only) and, with `--online`, one read-only session check.
+
+### Changed
+
+- Expired-session detection: a response that starts with `{` is judged only by its JSON login message, never by HTML markers.
+
 ## [0.2.0] - 2026-10-16
 
 ### Fixed
