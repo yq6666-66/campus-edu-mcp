@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-10-16
+
+### Added
+
+- School registry (`schools/*.yaml`, flat `key: value`, no YAML dependency): `campus-edu-mcp schools [--dir]`, status `verified` / `stale` (last_verified older than 183 days) / `pending`; `doctor` reports the configured school. Repository entries must be fictional (`*.example.edu.cn`, tested).
+- Experimental Streamable HTTP transport: `serve --transport http --port N`. Binds 127.0.0.1 only (no host option), requires `CAMPUS_EDU_HTTP_TOKEN` (≥32 chars) as a Bearer token checked in constant time, and uses the SDK's DNS-rebinding protection with localhost-only Host/Origin. Not covered by semver.
+
 ## [0.4.0] - 2026-10-16
 
 ### Added

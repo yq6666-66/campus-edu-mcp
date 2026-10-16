@@ -30,6 +30,8 @@ The server is built with the official MCP SDK (`mcp` 2.3.0, `MCPServer`, stdio t
 
 - Version: `0.3.0` (local development)
 - Experimental `campus-edu-mcp login --username ID` (Qiangzhi only, CLI only, **not live-verified**): manual captcha from a local image file, password via getpass only, never stored and never through MCP; requires a system keyring.
+- `campus-edu-mcp schools` lists the school registry with `verified` / `stale` (older than 183 days) / `pending`.
+- Experimental Streamable HTTP: `CAMPUS_EDU_HTTP_TOKEN=<32+ random chars> campus-edu-mcp serve --transport http --port 8848` — binds 127.0.0.1 only, requires `Authorization: Bearer <token>`, Host/Origin restricted to localhost.
 - `campus-edu-mcp doctor [--online]` self-check (reports presence only, never cookie values).
 - Every result carries `meta.status` (verified / stale / pending). Zhengfang V9 is disabled unless `CAMPUS_EDU_ALLOW_UNVERIFIED=1`.
 - Experimental CLI: `export-ics --term-start --periods --out` (you supply the period times).

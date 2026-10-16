@@ -3,7 +3,7 @@
 > 只读的高校教务 MCP 服务：让 AI 回答「我明天几点上课」「下周有什么考试」「上学期挂科了吗」。
 > **非官方项目，只能查询你本人的账号，永远不做选课、退课、评教等任何写操作。**
 
-当前版本 v0.4.0（本地开发中）。**默认适配强智教务（jsxsd）**；正方 V9 适配器仍保留但未实测。
+当前版本 v0.5.0（本地开发中）。**默认适配强智教务（jsxsd）**；正方 V9 适配器仍保留但未实测。
 
 示例学校配置见 `schools/example-qiangzhi.yaml`（请改成你自己学校的 `base_url`）。
 强智适配器已在**一所强智校**做过只读 live 验证（课表 / 成绩，2026-10-16）；考试路径因校而异，有实际考试数据时的解析尚未验证。正方 V9 未做 live 实测。
@@ -22,7 +22,7 @@
 | `session_status()` | 会话是否已导入、是否仍有效（不返回任何 Cookie） |
 
 `year` 是学年起始年（2025 表示 2025-2026 学年），`term` 为 1/2/3，不填则按日期推断当前学期。
-每个数据工具结果带 `meta`（`status`: verified / stale / pending）。正方 V9 默认禁用，需 `CAMPUS_EDU_ALLOW_UNVERIFIED=1`。实验性登录（**未经 live 实测**，仅强智、仅 CLI）：`campus-edu-mcp login --username 学号`，验证码图片保存在本地由你肉眼输入，密码只在终端 getpass 输入、不保存、不经过 MCP；需要系统 keyring。失败时请继续用 `import-session`。自检：`campus-edu-mcp doctor [--online]`（只报告有/无，不输出 Cookie）。实验性 CLI：`campus-edu-mcp export-ics --term-start YYYY-MM-DD --periods 作息.json --out kb.ics`（作息时间需自己提供；时间为不带时区的本地时间）。
+每个数据工具结果带 `meta`（`status`: verified / stale / pending）。正方 V9 默认禁用，需 `CAMPUS_EDU_ALLOW_UNVERIFIED=1`。实验性登录（**未经 live 实测**，仅强智、仅 CLI）：`campus-edu-mcp login --username 学号`，验证码图片保存在本地由你肉眼输入，密码只在终端 getpass 输入、不保存、不经过 MCP；需要系统 keyring。失败时请继续用 `import-session`。学校登记表：`campus-edu-mcp schools`（`last_verified` 超过 183 天显示 stale）。实验性 Streamable HTTP：`CAMPUS_EDU_HTTP_TOKEN=<≥32 位随机串> campus-edu-mcp serve --transport http --port 8848`，只监听 127.0.0.1，每个请求需 `Authorization: Bearer <token>`，Host/Origin 仅限本机。自检：`campus-edu-mcp doctor [--online]`（只报告有/无，不输出 Cookie）。实验性 CLI：`campus-edu-mcp export-ics --term-start YYYY-MM-DD --periods 作息.json --out kb.ics`（作息时间需自己提供；时间为不带时区的本地时间）。
 
 课表 / 考试 / 成绩结果都**不含学号、姓名、排名**，并附带 `privacy_notice`（`session_status` 不含该字段）。
 

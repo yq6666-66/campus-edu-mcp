@@ -44,6 +44,22 @@ def run_checks(
         checks.append(Check("transport", "warn", "教务地址不是 https，Cookie 会明文传输"))
     if config.min_interval < 1.0:
         checks.append(Check("rate-limit", "warn", f"min_interval={config.min_interval}s 偏小"))
+    if config.school_id:
+        from .registry import find_school
+
+        school = find_school(config.school_id)
+        if school is None:
+            checks.append(Check("school", "warn", f"登记表中没有 {config.school_id}"))
+        else:
+            school_status = school.status()
+            checks.append(
+                Check(
+                    "school",
+                    "ok" if school_status == "verified" else "warn",
+                    f"{school.school_id}: {school_status}"
+                    f"（last_verified={school.last_verified or '-'}）",
+                )
+            )
     if config.vendor in UNVERIFIED_VENDORS:
         allowed = os.environ.get(ALLOW_UNVERIFIED_ENV) == "1"
         checks.append(

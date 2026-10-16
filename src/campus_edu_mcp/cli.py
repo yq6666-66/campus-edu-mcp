@@ -30,7 +30,16 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--verbose", action="store_true", help="输出调试日志（已脱敏）")
     p.add_argument("--debug", action="store_true", help="出错时打印堆栈")
     sub = p.add_subparsers(dest="command")
-    sub.add_parser("serve", help="以 stdio 方式启动 MCP 服务（默认）")
+    sv = sub.add_parser("serve", help="启动 MCP 服务（默认 stdio）")
+    sv.add_argument(
+        "--transport",
+        choices=["stdio", "http"],
+        default="stdio",
+        help="http 为实验性 Streamable HTTP：仅 127.0.0.1，需 CAMPUS_EDU_HTTP_TOKEN",
+    )
+    sv.add_argument("--port", type=int, default=8848, help="http 传输端口（仅本机）")
+    sc = sub.add_parser("schools", help="列出学校登记表及其验证状态")
+    sc.add_argument("--dir", type=Path, default=None, help="登记表目录（默认仓库 schools/）")
     c = sub.add_parser("configure", help="设置教务系统地址")
     c.add_argument("--base-url", required=True, help="如 https://jw.example.edu.cn/jsxsd/")
     c.add_argument(
@@ -140,9 +149,35 @@ def run(argv: Sequence[str] | None = None) -> int:
     command = args.command or "serve"
     try:
         if command == "serve":
+            if getattr(args, "transport", "stdio") == "http":
+                from .http_transport import load_token, serve_http
+
+                load_token()  # 先校验，避免启动后才报错
+                print(
+                    f"实验性 Streamable HTTP：http://127.0.0.1:{args.port}/mcp（需 Bearer token）",
+                    file=sys.stderr,
+                )
+                serve_http(args.port)
+                return 0
             from .server import build_server
 
             build_server().run("stdio")
+            return 0
+        if command == "schools":
+            from .registry import list_schools
+
+            entries = list_schools(args.dir)
+            if not entries:
+                print("没有找到学校登记表。")
+                return 1
+            for filename, school, error in entries:
+                if school is None:
+                    print(f"[无效] {filename}: {error}")
+                else:
+                    print(
+                        f"{school.school_id}\t{school.vendor}\t{school.status()}"
+                        f"\t{school.last_verified or '-'}"
+                    )
             return 0
         if command == "configure":
             url = httpx.URL(args.base_url)
