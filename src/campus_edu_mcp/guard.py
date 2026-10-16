@@ -154,6 +154,25 @@ class GuardTransport(httpx.BaseTransport):
         self.inner.close()
 
 
+class Pacer:
+    """同一学校 host 的请求节奏：锁 + 上次请求时间。进程内所有 GuardedClient 共享。"""
+
+    def __init__(self) -> None:
+        self.lock = threading.Lock()
+        self.last = float("-inf")
+
+
+_PACERS: dict[tuple[str, str, int | None], Pacer] = {}
+_PACERS_LOCK = threading.Lock()
+
+
+def shared_pacer(base_url: str) -> Pacer:
+    url = httpx.URL(base_url)
+    key = (url.scheme, url.host, url.port)
+    with _PACERS_LOCK:
+        return _PACERS.setdefault(key, Pacer())
+
+
 class GuardedClient:
     """适配器唯一可用的 HTTP 入口。
 
@@ -190,8 +209,9 @@ class GuardedClient:
         self.login_markers = tuple(login_markers)
         self._clock = clock
         self._sleep = sleep
-        self._last = float("-inf")
-        self._lock = threading.Lock()
+        # 默认时钟时共享进程级节奏，避免并发工具调用（如 HTTP 传输）各自新建客户端绕过限速；
+        # 注入自定义时钟（测试）时使用独立节奏。
+        self._pacer = shared_pacer(self.base_url) if clock is time.monotonic else Pacer()
 
     def post_form(
         self, path: str, params: Mapping[str, str], data: Mapping[str, str]
@@ -202,10 +222,10 @@ class GuardedClient:
         return self._request("GET", path, params=params or {}, data=None)
 
     def _throttle_unlocked(self) -> None:
-        wait = self._last + self.min_interval - self._clock()
+        wait = self._pacer.last + self.min_interval - self._clock()
         if wait > 0:
             self._sleep(wait)
-        self._last = self._clock()
+        self._pacer.last = self._clock()
 
     def _request(
         self,
@@ -218,7 +238,7 @@ class GuardedClient:
         if "://" in path or path.startswith("//"):
             raise GuardViolation("适配器只能使用相对路径")
         # 锁覆盖节流与发送，避免多线程把间隔压到低于 min_interval
-        with self._lock:
+        with self._pacer.lock:
             self._throttle_unlocked()
             request = self._client.build_request(method, path.lstrip("/"), params=params, data=data)
             for _hop in range(MAX_REDIRECTS + 1):

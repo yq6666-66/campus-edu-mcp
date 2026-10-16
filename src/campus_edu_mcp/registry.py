@@ -13,6 +13,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+import httpx
+
 from .verification import status_of
 
 REQUIRED = ("school_id", "vendor", "base_url")
@@ -40,12 +42,19 @@ def parse_school(text: str) -> School:
         m = _KEY.match(line)
         if not m:
             continue
-        value = m.group(2).split(" #", 1)[0].strip().strip("'\"")
+        raw = m.group(2).strip()
+        if raw[:1] in ("'", '"') and raw.count(raw[0]) >= 2:
+            value = raw[1 : raw.index(raw[0], 1)]
+        else:
+            value = raw.split(" #", 1)[0].strip()
         if value and value != "|":
             fields[m.group(1)] = value
     missing = [k for k in REQUIRED if k not in fields]
     if missing:
         raise ValueError(f"学校配置缺少字段 {','.join(missing)}")
+    url = httpx.URL(fields["base_url"])
+    if url.scheme not in {"http", "https"} or not url.host:
+        raise ValueError("base_url 必须是 http(s) 绝对地址")
     return School(
         school_id=fields["school_id"],
         vendor=fields["vendor"],
@@ -57,6 +66,10 @@ def parse_school(text: str) -> School:
 
 
 def schools_dir() -> Path | None:
+    """``CAMPUS_EDU_SCHOOLS_DIR`` 优先；否则源码仓库根目录的 ``schools/``。
+
+    pip 安装后仓库目录不存在，需要显式设置环境变量。
+    """
     override = os.environ.get("CAMPUS_EDU_SCHOOLS_DIR")
     if override:
         return Path(override)

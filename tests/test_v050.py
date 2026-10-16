@@ -52,13 +52,24 @@ def test_parse_school_and_status() -> None:
     assert school.base_url == "https://jw.example.edu.cn/jsxsd/"
     assert school.status(dt.date(2026, 3, 1)) == "verified"
     assert school.status(dt.date(2026, 10, 16)) == "stale"
-    assert parse_school("school_id: a\nvendor: b\nbase_url: c\n").status() == "pending"
+    assert (
+        parse_school("school_id: a\nvendor: b\nbase_url: https://jw.example.edu.cn/\n").status()
+        == "pending"
+    )
     with pytest.raises(ValueError, match="base_url"):
         parse_school("school_id: a\nvendor: b\n")
+    with pytest.raises(ValueError, match="http"):
+        parse_school("school_id: a\nvendor: b\nbase_url: file:///etc/passwd\n")
+    quoted = parse_school(
+        'school_id: "a # b"\nvendor: qiangzhi\nbase_url: https://jw.example.edu.cn/\n'
+    )
+    assert quoted.school_id == "a # b"
 
 
 def test_list_schools_tolerates_bad_files(tmp_path: Path) -> None:
-    (tmp_path / "a.yaml").write_text("school_id: a\nvendor: qiangzhi\nbase_url: x\n", "utf-8")
+    (tmp_path / "a.yaml").write_text(
+        "school_id: a\nvendor: qiangzhi\nbase_url: https://jw.example.edu.cn/jsxsd/\n", "utf-8"
+    )
     (tmp_path / "b.yaml").write_text("nothing", "utf-8")
     (tmp_path / "c.yaml").write_bytes(b"\xff\xfe\x00")
     entries = list_schools(tmp_path)
@@ -77,18 +88,28 @@ def test_cli_schools(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     (tmp_path / "a.yaml").write_text(
-        "school_id: a\nvendor: qiangzhi\nbase_url: x\nlast_verified: 2000-01-01\n", "utf-8"
+        "school_id: a\nvendor: qiangzhi\nbase_url: https://jw.example.edu.cn/jsxsd/\n"
+        "last_verified: 2000-01-01\n",
+        "utf-8",
     )
     (tmp_path / "b.yaml").write_text("bad", "utf-8")
     assert run(["schools", "--dir", str(tmp_path)]) == 0
     out = capsys.readouterr().out
     assert "a\tqiangzhi\tstale\t2000-01-01" in out and "[无效] b.yaml" in out
     assert run(["schools", "--dir", str(tmp_path / "none")]) == 1
+    (tmp_path / "a.yaml").write_text(
+        'school_id: "a\x1b[31m"\nvendor: qiangzhi\nbase_url: https://jw.example.edu.cn/\n',
+        "utf-8",
+    )
+    assert run(["schools", "--dir", str(tmp_path)]) == 0
+    assert "\x1b" not in capsys.readouterr().out
 
 
 def test_doctor_reports_school(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "s.yaml").write_text(
-        "school_id: demo\nvendor: qiangzhi\nbase_url: x\nlast_verified: 2000-01-01\n", "utf-8"
+        "school_id: demo\nvendor: qiangzhi\nbase_url: https://jw.example.edu.cn/jsxsd/\n"
+        "last_verified: 2000-01-01\n",
+        "utf-8",
     )
     monkeypatch.setenv("CAMPUS_EDU_SCHOOLS_DIR", str(tmp_path))
     monkeypatch.setenv("CAMPUS_EDU_BASE_URL", "https://jw.example.edu.cn/jsxsd/")
@@ -100,7 +121,8 @@ def test_doctor_reports_school(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     school = next(c for c in run_checks(store_factory=store) if c.name == "school")
     assert "没有" in school.detail
     (tmp_path / "s.yaml").write_text(
-        f"school_id: demo\nvendor: qiangzhi\nbase_url: x\nlast_verified: {dt.date.today()}\n",
+        "school_id: demo\nvendor: qiangzhi\nbase_url: https://jw.example.edu.cn/jsxsd/\n"
+        f"last_verified: {dt.date.today()}\n",
         "utf-8",
     )
     monkeypatch.setenv("CAMPUS_EDU_SCHOOL", "demo")
@@ -121,8 +143,13 @@ def test_load_token(monkeypatch: pytest.MonkeyPatch) -> None:
     assert load_token() == TOKEN
 
 
-def test_cli_http_requires_token() -> None:
+def test_cli_http_requires_token_and_valid_port(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     assert run(["serve", "--transport", "http", "--port", "18999"]) == 2
+    monkeypatch.setenv(TOKEN_ENV, TOKEN)
+    assert run(["serve", "--transport", "http", "--port", "0"]) == 2
+    assert "http://" not in capsys.readouterr().err
 
 
 async def _asgi(app: Any, headers: dict[str, str], port: int = 8848) -> httpx.Response:
@@ -150,6 +177,20 @@ def test_bearer_auth_rejects() -> None:
     app = BearerAuth(inner, TOKEN)
     for headers in ({}, {"authorization": "Bearer wrong"}, {"authorization": TOKEN}):
         assert asyncio.run(_asgi(app, headers)).status_code == 401
+    assert calls == []
+
+    async def duplicate() -> None:
+        sent: list[Any] = []
+
+        async def send(message: Any) -> None:
+            sent.append(message)
+
+        good = f"Bearer {TOKEN}".encode()
+        scope = {"type": "http", "headers": [(b"authorization", good), (b"authorization", good)]}
+        await app(scope, None, send)  # type: ignore[arg-type]
+        assert sent[0]["status"] == 401
+
+    asyncio.run(duplicate())
     assert calls == []
 
     async def lifespan() -> None:

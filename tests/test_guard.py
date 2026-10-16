@@ -270,3 +270,15 @@ def test_normalized_parent_path_stays_under_base() -> None:
     # httpx 规范化后路径仍在 base 下；不得因异常失败
     decision = wl.check(req)
     assert decision.allowed or "白名单" in decision.reason or "参数" in decision.reason
+
+
+def test_pacer_shared_across_clients_for_same_host() -> None:
+    from campus_edu_mcp.guard import shared_pacer
+
+    a = GuardedClient("https://pace.example.edu.cn/jwglxt/", RULES, {})
+    b = GuardedClient("https://pace.example.edu.cn/other/", RULES, {})
+    c = GuardedClient("https://other.example.edu.cn/jwglxt/", RULES, {})
+    assert a._pacer is b._pacer is shared_pacer("https://pace.example.edu.cn/")
+    assert a._pacer is not c._pacer
+    custom = GuardedClient("https://pace.example.edu.cn/jwglxt/", RULES, {}, clock=lambda: 0.0)
+    assert custom._pacer is not a._pacer

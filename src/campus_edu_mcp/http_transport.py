@@ -50,12 +50,10 @@ class BearerAuth:
         if scope.get("type") != "http":
             await self.app(scope, receive, send)
             return
-        provided = b""
-        for key, value in scope.get("headers", []):
-            if key.lower() == b"authorization":
-                provided = value
-                break
-        if not hmac.compare_digest(provided, self._expected):
+        values = [v for k, v in scope.get("headers", []) if k.lower() == b"authorization"]
+        provided = values[0] if len(values) == 1 else b""
+        # 恰好一个 Authorization 头且常量时间相等才放行；重复头一律拒绝
+        if len(values) != 1 or not hmac.compare_digest(provided, self._expected):
             await send(
                 {
                     "type": "http.response.start",
@@ -87,10 +85,15 @@ def build_app(port: int, token: str, server: Any | None = None) -> ASGIApp:
     return BearerAuth(app, token)
 
 
+def check_port(port: int) -> int:
+    if not 1024 <= port <= 65535:
+        raise ConfigError("端口应在 1024-65535 之间")
+    return port
+
+
 def serve_http(port: int) -> None:  # pragma: no cover - 由端到端测试以子进程覆盖
     import uvicorn
 
-    if not 1024 <= port <= 65535:
-        raise ConfigError("端口应在 1024-65535 之间")
+    check_port(port)
     token = load_token()
     uvicorn.run(build_app(port, token), host=HOST, port=port, log_level="warning")

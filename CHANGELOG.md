@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - School registry (`schools/*.yaml`, flat `key: value`, no YAML dependency): `campus-edu-mcp schools [--dir]`, status `verified` / `stale` (last_verified older than 183 days) / `pending`; `doctor` reports the configured school. Repository entries must be fictional (`*.example.edu.cn`, tested).
 - Experimental Streamable HTTP transport: `serve --transport http --port N`. Binds 127.0.0.1 only (no host option), requires `CAMPUS_EDU_HTTP_TOKEN` (≥32 chars) as a Bearer token checked in constant time, and uses the SDK's DNS-rebinding protection with localhost-only Host/Origin. Not covered by semver.
 
+### Changed
+
+- Guard pacing is now shared per school host across all `GuardedClient`s in the process, so concurrent tool calls (e.g. over HTTP) cannot bypass `min_interval`.
+- HTTP transport rejects requests with duplicate `Authorization` headers; port is validated before startup output.
+- Registry validates `base_url` (http/https with host), handles quoted values, and `schools` output strips control characters.
+
 ## [0.4.0] - 2026-10-16
 
 ### Added

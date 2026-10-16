@@ -143,6 +143,11 @@ def _export_ics(args: argparse.Namespace) -> int:
     return 0
 
 
+def _printable(text: str) -> str:
+    """去掉控制字符，避免登记表内容干扰终端。"""
+    return "".join(ch for ch in text if ch.isprintable())
+
+
 def run(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     install_logging(args.verbose)
@@ -150,8 +155,9 @@ def run(argv: Sequence[str] | None = None) -> int:
     try:
         if command == "serve":
             if getattr(args, "transport", "stdio") == "http":
-                from .http_transport import load_token, serve_http
+                from .http_transport import check_port, load_token, serve_http
 
+                check_port(args.port)
                 load_token()  # 先校验，避免启动后才报错
                 print(
                     f"实验性 Streamable HTTP：http://127.0.0.1:{args.port}/mcp（需 Bearer token）",
@@ -175,8 +181,15 @@ def run(argv: Sequence[str] | None = None) -> int:
                     print(f"[无效] {filename}: {error}")
                 else:
                     print(
-                        f"{school.school_id}\t{school.vendor}\t{school.status()}"
-                        f"\t{school.last_verified or '-'}"
+                        "\t".join(
+                            _printable(x)
+                            for x in (
+                                school.school_id,
+                                school.vendor,
+                                school.status(),
+                                school.last_verified or "-",
+                            )
+                        )
                     )
             return 0
         if command == "configure":
