@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-10-16
+
+### Added
+
+- API freeze: `tests/snapshots/api-v1.json` snapshots every MCP tool's name, input schema, annotations and result field names; the CLI subcommand set is also frozen by a test.
+- `docs/api-stability.md` (stable vs experimental surface, semver rules, deprecation policy: at least one minor release and 90 days, removal only in a major) and `docs/migration.md` (0.1.0 → 1.0.0).
+- `get_empty_classrooms` results now include `privacy_notice`, like the other data tools.
+
+### Status
+
+- Live-verified read-only on one Qiangzhi school: timetable, grades, session check, `get_terms`, `get_empty_classrooms` (2026-10-16). Exams: only the empty-exam page (`pending`).
+- Pending: password `login` (no login POST was ever sent), Zhengfang V9, ICS export (mock/fixture only), HTTP transport (local tests only).
+
 ## [0.5.0] - 2026-10-16
 
 ### Added

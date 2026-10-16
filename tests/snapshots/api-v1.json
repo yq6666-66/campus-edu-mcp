@@ -1,0 +1,365 @@
+{
+ "get_empty_classrooms": {
+  "annotations": {
+   "destructive_hint": false,
+   "idempotent_hint": true,
+   "open_world_hint": true,
+   "read_only_hint": true
+  },
+  "input_schema": {
+   "properties": {
+    "campus": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Campus"
+    },
+    "limit": {
+     "default": 50,
+     "title": "Limit",
+     "type": "integer"
+    },
+    "min_capacity": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Min Capacity"
+    },
+    "periods": {
+     "anyOf": [
+      {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Periods"
+    },
+    "term": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Term"
+    },
+    "week": {
+     "title": "Week",
+     "type": "integer"
+    },
+    "weekday": {
+     "title": "Weekday",
+     "type": "integer"
+    },
+    "year": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Year"
+    }
+   },
+   "required": [
+    "week",
+    "weekday"
+   ],
+   "title": "get_empty_classroomsArguments",
+   "type": "object"
+  },
+  "result_shape": {
+   "meta": {
+    "endpoint": "*",
+    "last_verified": "*",
+    "status": "*",
+    "vendor": "*"
+   },
+   "periods": [
+    {
+     "code": "*",
+     "end": "*",
+     "start": "*"
+    }
+   ],
+   "privacy_notice": "*",
+   "required_free": [
+    "*"
+   ],
+   "rooms": [
+    {
+     "capacity": "*",
+     "free_periods": [
+      "*"
+     ],
+     "name": "*"
+    }
+   ],
+   "term": "*",
+   "total_matched": "*",
+   "truncated": "*",
+   "week": "*",
+   "weekday": "*"
+  }
+ },
+ "get_exams": {
+  "annotations": {
+   "destructive_hint": false,
+   "idempotent_hint": true,
+   "open_world_hint": true,
+   "read_only_hint": true
+  },
+  "input_schema": {
+   "properties": {
+    "term": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Term"
+    },
+    "year": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Year"
+    }
+   },
+   "title": "get_examsArguments",
+   "type": "object"
+  },
+  "result_shape": {
+   "exams": [
+    {
+     "campus": "*",
+     "name": "*",
+     "place": "*",
+     "seat": "*",
+     "time": "*"
+    }
+   ],
+   "meta": {
+    "endpoint": "*",
+    "last_verified": "*",
+    "status": "*",
+    "vendor": "*"
+   },
+   "privacy_notice": "*",
+   "term": {
+    "term": "*",
+    "year": "*"
+   }
+  }
+ },
+ "get_grades": {
+  "annotations": {
+   "destructive_hint": false,
+   "idempotent_hint": true,
+   "open_world_hint": true,
+   "read_only_hint": true
+  },
+  "input_schema": {
+   "properties": {
+    "include_scores": {
+     "default": false,
+     "title": "Include Scores",
+     "type": "boolean"
+    },
+    "term": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Term"
+    },
+    "year": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Year"
+    }
+   },
+   "title": "get_gradesArguments",
+   "type": "object"
+  },
+  "result_shape": {
+   "failed_count": "*",
+   "grades": [
+    {
+     "course": "*",
+     "credit": "*",
+     "nature": "*",
+     "passed": "*",
+     "term": "*",
+     "year": "*"
+    }
+   ],
+   "include_scores": "*",
+   "meta": {
+    "endpoint": "*",
+    "last_verified": "*",
+    "status": "*",
+    "vendor": "*"
+   },
+   "privacy_notice": "*",
+   "term": "*"
+  }
+ },
+ "get_terms": {
+  "annotations": {
+   "destructive_hint": false,
+   "idempotent_hint": true,
+   "open_world_hint": true,
+   "read_only_hint": true
+  },
+  "input_schema": {
+   "properties": {},
+   "title": "get_termsArguments",
+   "type": "object"
+  },
+  "result_shape": {
+   "meta": {
+    "endpoint": "*",
+    "last_verified": "*",
+    "status": "*",
+    "vendor": "*"
+   },
+   "privacy_notice": "*",
+   "terms": [
+    {
+     "current": "*",
+     "label": "*",
+     "term": "*",
+     "year": "*"
+    }
+   ]
+  }
+ },
+ "get_timetable": {
+  "annotations": {
+   "destructive_hint": false,
+   "idempotent_hint": true,
+   "open_world_hint": true,
+   "read_only_hint": true
+  },
+  "input_schema": {
+   "properties": {
+    "term": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Term"
+    },
+    "year": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Year"
+    }
+   },
+   "title": "get_timetableArguments",
+   "type": "object"
+  },
+  "result_shape": {
+   "courses": [
+    {
+     "campus": "*",
+     "credit": "*",
+     "name": "*",
+     "place": "*",
+     "sessions": "*",
+     "teacher": "*",
+     "weekday": "*",
+     "weeks": "*"
+    }
+   ],
+   "meta": {
+    "endpoint": "*",
+    "last_verified": "*",
+    "status": "*",
+    "vendor": "*"
+   },
+   "privacy_notice": "*",
+   "term": {
+    "term": "*",
+    "year": "*"
+   }
+  }
+ },
+ "session_status": {
+  "annotations": {
+   "destructive_hint": false,
+   "idempotent_hint": true,
+   "open_world_hint": true,
+   "read_only_hint": true
+  },
+  "input_schema": {
+   "properties": {},
+   "title": "session_statusArguments",
+   "type": "object"
+  },
+  "result_shape": {
+   "imported": "*",
+   "message": "*",
+   "valid": "*"
+  }
+ }
+}

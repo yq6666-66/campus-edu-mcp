@@ -205,6 +205,7 @@ class Service:
             "rooms": [r.model_dump() for r in matched[:limit]],
             "truncated": len(matched) > limit,
             "meta": meta(self._vendor, "empty_classrooms"),
+            "privacy_notice": PRIVACY_NOTICE,
         }
 
     def grades(
