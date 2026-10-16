@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Live-verified Qiangzhi adapter against one Qiangzhi school (2026-10-16): `#timetable` parser, `教师` font title, exam empty-row handling.
-- Primary adapter switched to **Qiangzhi (jsxsd)** after confirming one Qiangzhi school uses 强智; school config `schools/example-qiangzhi.yaml` (`last_verified: pending`).
+- Live-verified Qiangzhi adapter on one Qiangzhi school (2026-10-16): `#timetable` parser, `教师` font title, exam empty-row handling.
+- Primary adapter switched to **Qiangzhi (jsxsd)**; example school config `schools/example-qiangzhi.yaml`.
 - Zhengfang V9 adapter retained as secondary / unverified.
 - Initial read-only MCP server using the official MCP SDK 2.3.0 (`MCPServer`, stdio only).
 - MCP tools: `get_timetable(year?, term?)`, `get_exams(year?, term?)`, `get_grades(year?, term?, include_scores=false)`, `session_status()`.
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limitations
 
-- a Qiangzhi school (Qiangzhi) timetable and grades verified live read-only on 2026-10-16; exam path returned empty placeholder that day — parsing with non-empty exam data is unverified.
+- Qiangzhi timetable and grades verified live read-only on one school (2026-10-16); exam path returned empty placeholder that day — parsing with non-empty exam data is unverified.
 - Zhengfang V9 adapter is retained but **not** live-verified.
 - Not published to PyPI; install from a local clone / GitHub Release source archive.
 - Tool results may be sent to cloud model providers when used with hosted AI clients (see `privacy_notice`).

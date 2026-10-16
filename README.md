@@ -5,9 +5,8 @@
 
 当前版本 v0.1.0（未发布）。**默认适配强智教务（jsxsd）**；正方 V9 适配器仍保留但未实测。
 
-一所强智高校（[jw.example.edu.cn](https://jw.example.edu.cn/Logon.do?method=logon)）公开登录页显示为湖南强智科技，
-配置见 `schools/example-qiangzhi.yaml`。课表 / 成绩路径有较充分的公开资料；**考试安排路径尚未在本校核实**。
-强智适配器已在一所强智高校用真实会话做过只读 live 验证（课表 / 成绩）；考试路径仍可能因校而异。正方 V9 未做 live 实测。
+示例学校配置见 `schools/example-qiangzhi.yaml`（请改成你自己学校的 `base_url`）。
+强智适配器已在**一所强智校**做过只读 live 验证（课表 / 成绩，2026-10-16）；考试路径因校而异，有实际考试数据时的解析尚未验证。正方 V9 未做 live 实测。
 
 ## 功能
 

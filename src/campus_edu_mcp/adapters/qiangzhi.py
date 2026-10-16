@@ -1,8 +1,8 @@
 """强智教务（jsxsd 学生端）只读适配器。
 
-端点依据公开资料与一所强智高校（a Qiangzhi school）只读实测整理（见 docs/qiangzhi-notes.md）。
-一所强智高校（example-qiangzhi）登录页版权为「湖南强智科技」，同时存在根路径 ``/Logon.do``
-与 ``/jsxsd/`` 两套入口；本适配器面向 ``/jsxsd/`` 学生端。
+端点依据公开资料与一所强智校的只读实测整理（见 docs/qiangzhi-notes.md）。
+部分部署同时存在根路径 ``/Logon.do`` 与 ``/jsxsd/`` 两套入口；本适配器面向
+``/jsxsd/`` 学生端。
 
 未复制任何 GPL / MPL 项目的代码；HTML 解析逻辑为自行实现。
 """
@@ -33,7 +33,7 @@ _TEXT = r"[\w\u4e00-\u9fff%+.\-]{0,40}"
 
 TIMETABLE_PATH = "xskb/xskb_list.do"
 GRADES_PATHS = ("kscj/cjcx_list", "kscj/cjcx_list.do")
-EXAMS_PATHS = ("xsks/xsksap_list", "xsks/xsksap_list.do")  # 路径未在本校核实
+EXAMS_PATHS = ("xsks/xsksap_list", "xsks/xsksap_list.do")  # 路径因校而异，需自测
 
 RULES: Sequence[Rule] = (
     Rule(
@@ -82,7 +82,7 @@ RULES: Sequence[Rule] = (
             method,
             path,
             free={"xnxqid": _TERM_ID, "xnxq01id": _TERM_ID},
-            description=f"考试安排（{method} {path}，路径未核实）",
+            description=f"考试安排（{method} {path}，路径因校而异）",
         )
         for path in EXAMS_PATHS
         for method in ("GET", "POST")

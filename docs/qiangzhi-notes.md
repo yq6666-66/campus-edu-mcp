@@ -1,13 +1,13 @@
 # 强智教务（jsxsd）公开资料笔记
 
-调研日期：2026-10-16。**下列端点均未在一所强智高校真实账号下实测。**
+调研日期：2026-10-16。**下列为公开资料与一次只读实测的归纳；各校部署可能不同。**
 
-## 本校公开观察（仅未登录 GET）
+## 某强智校公开观察（仅未登录 GET，域名已脱敏）
 
 | 项 | 结果 |
 |---|---|
 | 登录 URL | `https://jw.example.edu.cn/Logon.do?method=logon` |
-| 版权 | Copyright © 2020.湖南强智科技发展有限公司 |
+| 版权 | 页面常见「强智科技」版权字样 |
 | 验证码 | `/verifycode.servlet`（根路径）；jsxsd 下为 `/jsxsd/verifycode.servlet` |
 | 登录加密字段 | `encoded`、`scode`、`sxh`、`RANDOMCODE`（页面脚本可见） |
 | 会话探测 URL | `/Logon.do?method=logon&flag=sess` |
@@ -20,7 +20,7 @@
 |---|---|---|---|---|
 | 课表 | `/jsxsd/xskb/xskb_list.do` | GET/POST | `xnxq01id=YYYY-YYYY-N`，偶见 `Ves632DSdyV` | **高**：多个 MIT 项目与公开笔记 |
 | 成绩 | `/jsxsd/kscj/cjcx_list`（有的带 `.do`） | GET/POST | `kksj`、`kcxz`、`kcmc`、`xsfs=all`；表格 `#dataList` | **高**：多篇公开博客 / Apifox |
-| 考试安排 | `/jsxsd/xsks/xsksap_list`（或 `.do`） | GET/POST | `xnxqid` 或 `xnxq01id` | **低**：名称来自社区惯例，**本校与表头未核实** |
+| 考试安排 | `/jsxsd/xsks/xsksap_list`（或 `.do`） | GET/POST | `xnxqid` 或 `xnxq01id` | **低**：名称来自社区惯例，**表头因校而异，需自测** |
 
 另有移动端 JSON 风格 `app.do?method=getKbcxAzc|getCjcx|getKscx`（需 token），本 MVP **不使用**。
 
@@ -35,7 +35,7 @@
 调研时浏览了 MIT 项目 `inannan423/classCrawl`、`tangjiafu430-bot/xiaoai-kebiao-importer` 的路径与结构描述，
 以及 GPL-3.0 的 Dawn-Course（**只看路径名，未使用其代码**）。
 
-## 本校 live 验证（2026-10-16）
+## 只读 live 验证（2026-10-16，一所强智校）
 
 - 会话 Cookie 有效时，`GET xskb/xskb_list.do` 返回 `#timetable`。
 - `POST kscj/cjcx_list`（`xsfs=all`）返回 `#dataList` 成绩表。

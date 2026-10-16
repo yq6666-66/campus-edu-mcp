@@ -1,14 +1,12 @@
-# 一所强智高校（湖南强智科技）
+# 强智教务（jsxsd）示例配置 —— 请改成你自己学校的地址后再用
 school_id: example-qiangzhi
-name: 一所强智高校
+name: Example Qiangzhi School
 vendor: qiangzhi
 base_url: https://jw.example.edu.cn/jsxsd/
 login_url: https://jw.example.edu.cn/Logon.do?method=logon
 notes: |
-  公开登录页版权为「湖南强智科技发展有限公司」，CSS 版本参数 sjc=V1.32。
-  同时存在根路径 /Logon.do 与 /jsxsd/ 两套入口；本配置指向 jsxsd 学生端。
-  登录页含 verifycode.servlet 验证码、encoded/scode/sxh 加密字段。
-  课表页面为 #timetable（非 #kbtable），节次形如「第一大节 (01,02小节)」，教师 font title 为「教师」。
-  考试安排路径 xsks/xsksap_list 已在本校可达；当前学期若无考试则返回一行提示，解析为 0 条。
+  示例占位配置。多数强智校使用 /jsxsd/ 学生端；登录页常见 verifycode.servlet。
+  课表多为 #timetable 或 #kbtable；节次可能是「第1-2节」或「第一大节 (01,02小节)」。
+  考试路径因校而异，常见 xsks/xsksap_list（未保证每校可用）。
 last_verified: 2026-10-16
 exams_path: xsks/xsksap_list

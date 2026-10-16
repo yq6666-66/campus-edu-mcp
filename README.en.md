@@ -1,6 +1,6 @@
 # campus-edu-mcp
 
-`campus-edu-mcp` is a read-only MCP (Model Context Protocol) server for interacting with campus academic systems. It defaults to the Qiangzhi (强智) `jsxsd` student portal. A Zhengfang V9 adapter is also included but has not been live-tested. School config for one Qiangzhi school: `schools/example-qiangzhi.yaml`.
+`campus-edu-mcp` is a read-only MCP (Model Context Protocol) server for interacting with campus academic systems. It defaults to the Qiangzhi (强智) `jsxsd` student portal. A Zhengfang V9 adapter is also included but has not been live-tested. Example school config: `schools/example-qiangzhi.yaml` (replace with your campus URL). Verified on one Qiangzhi school (2026-10-16).
 
 The server is built with the official MCP SDK (`mcp` 2.3.0, `MCPServer`, stdio transport only). It exposes course timetables, exam schedules, and grade summaries to MCP clients without exposing sensitive personal identifiers.
 
