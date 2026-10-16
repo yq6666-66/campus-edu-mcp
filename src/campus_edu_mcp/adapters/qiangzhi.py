@@ -38,6 +38,8 @@ RULES: Sequence[Rule] = (
             "Ves632DSdyV": _PARAM_TOKEN,
             "sfFD": r"[01]?",
             "cj0701id": _PARAM_TOKEN,
+            "zc": r"(\d{1,2})?",
+            "kbjcmsid": _PARAM_TOKEN,
         },
         description="学期理论课表（GET）",
     ),
@@ -49,6 +51,8 @@ RULES: Sequence[Rule] = (
             "Ves632DSdyV": _PARAM_TOKEN,
             "sfFD": r"[01]?",
             "cj0701id": _PARAM_TOKEN,
+            "zc": r"(\d{1,2})?",
+            "kbjcmsid": _PARAM_TOKEN,
         },
         description="学期理论课表（POST）",
     ),
@@ -174,11 +178,14 @@ class QiangzhiAdapter:
         if len(rows) < 2:
             return []
         header, body = rows[0], rows[1:]
+        # 强智在无考试时常用一行 colspan 提示，而不是 0 行
+        if len(body) == 1 and len(body[0]) <= 2:
+            return []
         i_name = _header_index(header, "课程名称", "课程")
         i_time = _header_index(header, "考试时间", "时间")
-        i_place = _header_index(header, "考试地点", "地点", "考场")
-        i_campus = _header_index(header, "校区")
-        i_seat = _header_index(header, "座号", "座位")
+        i_place = _header_index(header, "考场", "考试地点", "地点")
+        i_campus = _header_index(header, "考试校区", "校区")
+        i_seat = _header_index(header, "座位号", "座号", "座位")
         exams = []
         for row in body:
             name = _cell(row, i_name)

@@ -61,6 +61,9 @@ def load_cookies(host: str, store: SessionStore | None = None) -> dict[str, str]
         except OSError as exc:
             raise ConfigError("无法读取 CAMPUS_EDU_COOKIE_FILE 指向的文件") from exc
         return parse_cookie_text(text, host)
+    raw = os.environ.get("CAMPUS_EDU_COOKIE")
+    if raw:
+        return parse_cookie_text(raw, host)
     return None
 
 

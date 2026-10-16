@@ -8,6 +8,7 @@ notes: |
   公开登录页版权为「湖南强智科技发展有限公司」，CSS 版本参数 sjc=V1.32。
   同时存在根路径 /Logon.do 与 /jsxsd/ 两套入口；本配置指向 jsxsd 学生端。
   登录页含 verifycode.servlet 验证码、encoded/scode/sxh 加密字段。
-  考试安排路径 xsks/xsksap_list 尚未在本校核实。
-last_verified: pending
+  课表页面为 #timetable（非 #kbtable），节次形如「第一大节 (01,02小节)」，教师 font title 为「教师」。
+  考试安排路径 xsks/xsksap_list 已在本校可达；当前学期若无考试则返回一行提示，解析为 0 条。
+last_verified: 2026-10-16
 exams_path: xsks/xsksap_list

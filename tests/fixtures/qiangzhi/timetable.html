@@ -3,83 +3,91 @@
 <head><meta charset="UTF-8"><title>学期理论课表</title></head>
 <body>
 <form id="Form1" method="post" action="/jsxsd/xskb/xskb_list.do">
+  <select name="zc" id="zc">
+    <option value="" selected="selected">全部周次</option>
+    <option value="1">1</option>
+    <option value="2">2</option>
+  </select>
   <select name="xnxq01id" id="xnxq01id">
     <option value="2098-2099-1" selected="selected">2098-2099-1</option>
     <option value="2098-2099-2">2098-2099-2</option>
   </select>
-  <input type="submit" value="查询"/>
+  <select name="kbjcmsid"><option value="FAKEKBJCMSIDABCDEFGHIJKLMNOPQR" selected="selected">默认节次</option></select>
 </form>
-<table id="kbtable">
+<table border="1" width="100%" id="timetable">
   <tr>
-    <th></th><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th><th>星期六</th><th>星期日</th>
+    <th>&nbsp;</th><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th><th>星期六</th><th>星期日</th>
   </tr>
   <tr>
-    <th>第1-2节<br/>08:00-09:40</th>
+    <th>第一大节&nbsp;<br/>(01,02小节)</th>
     <td>
-      <div class="kbcontent">高等数学A（虚拟）
-        <br/><font title="老师">张老师A</font>
-        <br/><font title="周次(节次)">1-16(周)[01-02节]</font>
-        <br/><font title="教室">虚构楼101</font>
+      <div class="kbcontent1" style="display: none">&nbsp;</div>
+      <div class="kbcontent" style="display: none;position: relative">高等数学A（虚拟）
+        <br/><font title="教师">张老师A</font>
+        <br/><font title="周次(节次)">1-16(周)</font>
+        <br/><font title="教学楼">虚构楼</font>
+        <br/><font title="教室">101</font>
       </div>
-      <div class="kbcontent1" style="display:none">高等数学A（虚拟）</div>
     </td>
-    <td><div class="kbcontent">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
     <td>
-      <div class="kbcontent">大学英语B（虚拟）
-        <br/><font title="老师">李老师B</font>
-        <br/><font title="周次(节次)">1-16(周)[01-02节]</font>
+      <div class="kbcontent" style="display: none">大学英语B（虚拟）
+        <br/><font title="教师">李老师B</font>
+        <br/><font title="周次(节次)">1-16(周)</font>
         <br/><font title="教室">虚构楼202</font>
       </div>
     </td>
-    <td><div class="kbcontent">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
     <td>
-      <div class="kbcontent">大学物理C（虚拟）
-        <br/><font title="老师">王老师C</font>
-        <br/><font title="周次(节次)">1-8(周),10-16(双)[01-02节]</font>
+      <div class="kbcontent" style="display: none">大学物理C（虚拟）
+        <br/><font title="教师">王老师C</font>
+        <br/><font title="周次(节次)">1-8(周),10-16(双)</font>
         <br/><font title="教室">虚构楼303</font>
       </div>
     </td>
-    <td><div class="kbcontent">&nbsp;</div></td>
-    <td><div class="kbcontent">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
   </tr>
   <tr>
-    <th>第3-4节<br/>10:00-11:40</th>
-    <td><div class="kbcontent">&nbsp;</div></td>
+    <th>第二大节&nbsp;<br/>(03,04小节)</th>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
     <td>
-      <div class="kbcontent">数据结构（虚拟）
-        <br/><font title="老师">赵老师D</font>
-        <br/><font title="周次(节次)">1-16(周)[03-04节]</font>
+      <div class="kbcontent" style="display: none">数据结构（虚拟）
+        <br/><font title="教师">赵老师D</font>
+        <br/><font title="周次(节次)">1-16(周)</font>
         <br/><font title="教室">虚构楼401</font>
       </div>
     </td>
-    <td><div class="kbcontent">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
     <td>
-      <div class="kbcontent">线性代数（虚拟）
-        <br/><font title="老师">刘老师E</font>
-        <br/><font title="周次(节次)">1-12(周)[03-04节]</font>
+      <div class="kbcontent" style="display: none">线性代数（虚拟）
+        <br/><font title="教师">刘老师E</font>
+        <br/><font title="周次(节次)">1-12(周)</font>
         <br/><font title="教室">虚构楼501</font>
       </div>
     </td>
-    <td><div class="kbcontent">&nbsp;</div></td>
-    <td><div class="kbcontent">&nbsp;</div></td>
-    <td><div class="kbcontent">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
   </tr>
   <tr>
-    <th>第5-6节<br/>14:00-15:40</th>
+    <th>第三大节&nbsp;<br/>(05,06小节)</th>
     <td>
-      <div class="kbcontent">程序设计基础（虚拟）
-        <br/><font title="老师">陈老师F</font>
-        <br/><font title="周次(节次)">1-16(周)[05-06节]</font>
+      <div class="kbcontent" style="display: none">程序设计基础（虚拟）
+        <br/><font title="教师">陈老师F</font>
+        <br/><font title="周次(节次)">1-16(周)</font>
         <br/><font title="教室">虚构机房1</font>
       </div>
     </td>
-    <td><div class="kbcontent">&nbsp;</div></td>
-    <td><div class="kbcontent">&nbsp;</div></td>
-    <td><div class="kbcontent">&nbsp;</div></td>
-    <td><div class="kbcontent">&nbsp;</div></td>
-    <td><div class="kbcontent">&nbsp;</div></td>
-    <td><div class="kbcontent">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
+    <td><div class="kbcontent" style="display: none">&nbsp;</div></td>
   </tr>
+  <tr><th>备注:</th><td colspan="7">（虚构备注，无真实个人信息）</td></tr>
 </table>
+<!-- 兼容旧版 #kbtable 结构的额外样例由单元测试字符串覆盖 -->
 </body>
 </html>

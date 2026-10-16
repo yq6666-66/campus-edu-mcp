@@ -1,4 +1,4 @@
-"""极简 HTML 抽取，只覆盖强智课表 / 表格场景，避免引入额外依赖。"""
+"""极简 HTML 抽取，覆盖强智课表 / 表格场景，避免引入额外依赖。"""
 
 from __future__ import annotations
 
@@ -69,74 +69,190 @@ def table_rows(html_text: str, table_id: str) -> list[list[str]]:
     return parser.rows
 
 
-_DIV_BLOCK = re.compile(
-    r'<div\s+class=["\']kbcontent["\'][^>]*>(.*?)</div>',
-    re.IGNORECASE | re.DOTALL,
+_PERIOD_CLASSIC = re.compile(r"第\s*(\d+)\s*[-—~至到]\s*(\d+)\s*节")
+_PERIOD_DAJIE = re.compile(
+    r"第\s*([一二三四五六七八九十\d]+)\s*大节[\s\S]*?[\(（]\s*(\d+)\s*[,，、]\s*(\d+)(?:\s*[,，、]\s*(\d+))?\s*小节[\)）]"
 )
-_FONT = re.compile(
-    r'<font[^>]*title=["\']([^"\']+)["\'][^>]*>(.*?)</font>',
-    re.IGNORECASE | re.DOTALL,
-)
-_TAG = re.compile(r"<[^>]+>")
+_CN_NUM = {
+    "一": 1,
+    "二": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+}
+_TEACHER_TITLES = frozenset({"老师", "教师"})
+_PLACE_TITLES = frozenset({"教室", "地点"})
+_WEEK_TITLES = frozenset({"周次(节次)", "周次"})
 _SEP = re.compile(r"-{8,}")
 
 
 def _strip_tags(fragment: str) -> str:
-    text = _TAG.sub(" ", fragment)
+    text = re.sub(r"<[^>]+>", " ", fragment)
     return html.unescape(re.sub(r"\s+", " ", text)).strip()
 
 
-def parse_kbcontent_blocks(html_text: str) -> list[dict[str, str | int | None]]:
-    """从强智 ``#kbtable`` 中抽出课程块。
+def parse_period_label(text: str) -> str | None:
+    """把表头节次文字规范成 ``1-2节``。"""
+    text = html.unescape(text)
+    m = _PERIOD_CLASSIC.search(text)
+    if m:
+        return f"{m.group(1)}-{m.group(2)}节"
+    m = _PERIOD_DAJIE.search(text)
+    if m:
+        start, end = m.group(2), m.group(3)
+        return f"{int(start)}-{int(end)}节"
+    return None
 
-    结构依据多个公开项目对 ``kbcontent`` / ``font[title]`` 的描述自行实现，
-    未复制其代码。各校 HTML 细节可能不同，live 验证前视为**未核实**。
-    """
-    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", html_text, flags=re.I | re.S)
-    courses: list[dict[str, str | int | None]] = []
-    for row in rows:
-        th = re.search(r"<th[^>]*>(.*?)</th>", row, flags=re.I | re.S)
-        if not th:
-            continue
-        th_text = _strip_tags(th.group(1))
-        period = re.search(r"第\s*(\d+)\s*[-—~至到]\s*(\d+)\s*节", th_text)
-        if not period:
-            continue
-        sessions = f"{period.group(1)}-{period.group(2)}节"
-        tds = re.findall(r"<td[^>]*>(.*?)</td>", row, flags=re.I | re.S)
-        for day, td in enumerate(tds[:7], start=1):
-            for block in _DIV_BLOCK.findall(td):
-                if "kbcontent1" in block:  # 不应匹配到，防御
-                    continue
-                parts = _SEP.split(block)
-                for part in parts:
-                    name = ""
-                    fonts: dict[str, str] = {}
-                    for title, inner in _FONT.findall(part):
-                        fonts[title.strip()] = _strip_tags(inner)
-                    cleaned = _FONT.sub("", part)
-                    cleaned = _TAG.sub("\n", cleaned)
-                    for line in cleaned.splitlines():
-                        text = html.unescape(line).strip()
-                        text = re.sub(r"\s*[PO]\s*$", "", text).strip()
-                        if text and text not in {"&nbsp;", "\xa0"}:
-                            name = text
-                            break
-                    if not name:
-                        continue
-                    weeks = fonts.get("周次(节次)") or fonts.get("周次") or ""
-                    weeks = re.sub(r"\[.*?\]", "", weeks).strip()
-                    courses.append(
-                        {
-                            "name": name,
-                            "teacher": fonts.get("老师") or fonts.get("教师"),
-                            "place": fonts.get("教室") or fonts.get("地点"),
-                            "weeks": weeks or None,
-                            "sessions": sessions,
-                            "weekday": day,
-                        }
-                    )
-    return courses
+
+class _KbParser(HTMLParser):
+    """解析强智课表：支持 ``#timetable`` / ``#kbtable``，兼容 ``display:none`` 的 kbcontent。"""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.courses: list[dict[str, str | int | None]] = []
+        self._in_table = False
+        self._table_depth = 0
+        self._row_period: str | None = None
+        self._day = 0
+        self._in_th = False
+        self._th_bits: list[str] = []
+        self._kb_depth = 0
+        self._kb_fonts: dict[str, str] = {}
+        self._kb_texts: list[str] = []
+        self._font_title: str | None = None
+        self._font_bits: list[str] = []
+        self._skip_kbcontent1 = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        d = dict(attrs)
+        if tag == "table":
+            tid = d.get("id") or ""
+            # 只认明确的课表 id；避免误吃页面其它表
+            if tid in {"timetable", "kbtable"}:
+                self._in_table = True
+                self._table_depth = 1
+                return
+            if self._in_table:
+                self._table_depth += 1
+            return
+        if not self._in_table or self._table_depth != 1:
+            return
+        if tag == "tr":
+            self._row_period = None
+            self._day = 0
+        elif tag == "th":
+            self._in_th = True
+            self._th_bits = []
+        elif tag == "td":
+            self._day += 1
+        elif tag == "br":
+            if self._in_th:
+                self._th_bits.append(" ")
+            elif self._kb_depth:
+                self._kb_texts.append("\n")
+        elif tag == "div":
+            classes = (d.get("class") or "").split()
+            if self._kb_depth:
+                self._kb_depth += 1
+            elif "kbcontent1" in classes:
+                self._skip_kbcontent1 = True
+                self._kb_depth = 1
+            elif "kbcontent" in classes:
+                self._kb_depth = 1
+                self._kb_fonts = {}
+                self._kb_texts = []
+                self._skip_kbcontent1 = False
+        elif tag == "font" and self._kb_depth and not self._skip_kbcontent1:
+            self._font_title = d.get("title")
+            self._font_bits = []
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "table" and self._in_table:
+            self._table_depth -= 1
+            if self._table_depth <= 0:
+                self._in_table = False
+            return
+        if not self._in_table or self._table_depth != 1:
+            return
+        if tag == "th" and self._in_th:
+            label = parse_period_label("".join(self._th_bits))
+            if label:
+                self._row_period = label
+            self._in_th = False
+        elif tag == "font" and self._font_title is not None:
+            self._kb_fonts[self._font_title] = "".join(self._font_bits).strip()
+            self._font_title = None
+            self._font_bits = []
+        elif tag == "div" and self._kb_depth:
+            self._kb_depth -= 1
+            if self._kb_depth == 0 and not self._skip_kbcontent1:
+                self._flush_kb()
+            if self._kb_depth == 0:
+                self._skip_kbcontent1 = False
+
+    def handle_data(self, data: str) -> None:
+        if self._in_th:
+            self._th_bits.append(data)
+        elif self._font_title is not None:
+            self._font_bits.append(data)
+        elif self._kb_depth and not self._skip_kbcontent1:
+            self._kb_texts.append(data)
+
+    def _flush_kb(self) -> None:
+        if not self._row_period or not (1 <= self._day <= 7):
+            return
+        raw = "".join(self._kb_texts)
+        chunks = _SEP.split(raw) if _SEP.search(raw) else [raw]
+        # 也按「有字体元数据的整块」处理：多数学校一块一课
+        if len(chunks) == 1 and self._kb_fonts:
+            chunks = [raw]
+        for chunk in chunks:
+            name = ""
+            for line in chunk.splitlines():
+                text = line.replace("\xa0", " ").strip()
+                text = re.sub(r"\s*[PO]\s*$", "", text).strip()
+                if text and text not in {"&nbsp;"}:
+                    name = text
+                    break
+            if not name and self._kb_fonts:
+                # 有的页面课程名在无 title 的 font 里，已并入 texts；若仍空则跳过
+                continue
+            if not name:
+                continue
+            teacher = next(
+                (self._kb_fonts[t] for t in _TEACHER_TITLES if self._kb_fonts.get(t)), None
+            )
+            place = next((self._kb_fonts[t] for t in _PLACE_TITLES if self._kb_fonts.get(t)), None)
+            building = self._kb_fonts.get("教学楼")
+            if building and place and building not in place:
+                place = f"{building} {place}"
+            elif building and not place:
+                place = building
+            weeks = next((self._kb_fonts[t] for t in _WEEK_TITLES if self._kb_fonts.get(t)), None)
+            if weeks:
+                weeks = re.sub(r"\[.*?\]", "", weeks).strip() or None
+            self.courses.append(
+                {
+                    "name": name,
+                    "teacher": teacher or None,
+                    "place": place or None,
+                    "weeks": weeks,
+                    "sessions": self._row_period,
+                    "weekday": self._day,
+                }
+            )
+
+
+def parse_kbcontent_blocks(html_text: str) -> list[dict[str, str | int | None]]:
+    """从强智课表 HTML 抽出课程块（``#timetable`` 或 ``#kbtable``）。"""
+    parser = _KbParser()
+    parser.feed(html_text)
+    return parser.courses
 
 
 def looks_like_login(html_text: str) -> bool:

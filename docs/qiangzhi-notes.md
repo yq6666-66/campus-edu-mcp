@@ -34,3 +34,10 @@
 
 调研时浏览了 MIT 项目 `inannan423/classCrawl`、`tangjiafu430-bot/xiaoai-kebiao-importer` 的路径与结构描述，
 以及 GPL-3.0 的 Dawn-Course（**只看路径名，未使用其代码**）。
+
+## 本校 live 验证（2026-10-16）
+
+- 会话 Cookie 有效时，`GET xskb/xskb_list.do` 返回 `#timetable`。
+- `POST kscj/cjcx_list`（`xsfs=all`）返回 `#dataList` 成绩表。
+- `POST xsks/xsksap_list`（`xnxqid=YYYY-YYYY-N`）可达；无考试时表体为提示行。
+- 未使用 `app.do` JSON 接口。

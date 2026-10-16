@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Live-verified Qiangzhi adapter against one Qiangzhi school (2026-10-16): `#timetable` parser, `教师` font title, exam empty-row handling.
 - Primary adapter switched to **Qiangzhi (jsxsd)** after confirming one Qiangzhi school uses 强智; school config `schools/example-qiangzhi.yaml` (`last_verified: pending`).
 - Zhengfang V9 adapter retained as secondary / unverified.
 - Initial read-only MCP server using the official MCP SDK 2.3.0 (`MCPServer`, stdio only).
