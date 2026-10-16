@@ -7,10 +7,10 @@
 | 类别 | 内容 |
 |---|---|
 | MCP 工具 | `get_timetable`、`get_exams`、`get_grades`、`get_terms`、`get_empty_classrooms`、`session_status`：工具名、参数名与类型、默认值、只读注解 |
-| 工具结果 | 现有字段名及含义（`tests/snapshots/api-v1.json` 冻结）；`privacy_notice` 与 `meta` 一直存在（`session_status` 除外） |
+| 工具结果 | 现有字段名、JSON 类型及含义（`tests/snapshots/api-v1.json` 冻结）；自 1.0.0 起每个数据工具都带 `privacy_notice` 与 `meta`（`session_status` 除外）；`term` 统一为 `{"year","term"}` 或 `null`（`null` = 全部学期 / 系统默认学期） |
 | 隐私默认值 | `get_grades` 默认不返回分数 / 绩点；任何结果都不含学号、姓名、排名 |
-| CLI | `serve`（stdio）、`configure`、`import-session`、`session-status`、`clear-session`、`doctor`、`schools` 的子命令与参数；退出码 0/1/2/3 |
-| 环境变量 | `CAMPUS_EDU_BASE_URL`、`CAMPUS_EDU_VENDOR`、`CAMPUS_EDU_SCHOOL`、`CAMPUS_EDU_MIN_INTERVAL`、`CAMPUS_EDU_COOKIE`、`CAMPUS_EDU_COOKIE_FILE`、`CAMPUS_EDU_DATA_DIR`、`CAMPUS_EDU_ALLOW_UNVERIFIED`、`CAMPUS_EDU_SCHOOLS_DIR` |
+| CLI | `serve`（stdio）、`configure`、`import-session`、`session-status`、`clear-session`、`doctor`、`schools` 的子命令与参数（`tests/snapshots/cli-v1.json` 冻结）；退出码 0/1/2/3 |
+| 环境变量 | `CAMPUS_EDU_BASE_URL`、`CAMPUS_EDU_VENDOR`、`CAMPUS_EDU_SCHOOL`、`CAMPUS_EDU_MIN_INTERVAL`、`CAMPUS_EDU_COOKIE`、`CAMPUS_EDU_COOKIE_FILE`、`CAMPUS_EDU_DATA_DIR`、`CAMPUS_EDU_ALLOW_UNVERIFIED`（变量本身稳定；它开启的正方适配器是实验性的）、`CAMPUS_EDU_SCHOOLS_DIR` |
 | 本地存储 | 会话文件格式 v1（`{"v":1,"host","cookies"}`，Fernet + keyring）；新版本必须能读取旧格式 |
 
 **兼容的变更**（次版本即可）：新增工具、新增可选参数、结果中新增字段、`meta.status` 取值随实测更新、新增厂商适配器。

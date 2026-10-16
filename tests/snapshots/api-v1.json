@@ -94,36 +94,36 @@
   },
   "result_shape": {
    "meta": {
-    "endpoint": "*",
-    "last_verified": "*",
-    "status": "*",
-    "vendor": "*"
+    "endpoint": "string",
+    "last_verified": "string",
+    "status": "string",
+    "vendor": "string"
    },
    "periods": [
     {
-     "code": "*",
-     "end": "*",
-     "start": "*"
+     "code": "string",
+     "end": "string",
+     "start": "string"
     }
    ],
-   "privacy_notice": "*",
+   "privacy_notice": "string",
    "required_free": [
-    "*"
+    "string"
    ],
    "rooms": [
     {
-     "capacity": "*",
+     "capacity": "integer",
      "free_periods": [
-      "*"
+      "string"
      ],
-     "name": "*"
+     "name": "string"
     }
    ],
-   "term": "*",
-   "total_matched": "*",
-   "truncated": "*",
-   "week": "*",
-   "weekday": "*"
+   "term": "null",
+   "total_matched": "integer",
+   "truncated": "boolean",
+   "week": "integer",
+   "weekday": "integer"
   }
  },
  "get_exams": {
@@ -166,23 +166,23 @@
   "result_shape": {
    "exams": [
     {
-     "campus": "*",
-     "name": "*",
-     "place": "*",
-     "seat": "*",
-     "time": "*"
+     "campus": "string",
+     "name": "string",
+     "place": "string",
+     "seat": "string",
+     "time": "string"
     }
    ],
    "meta": {
-    "endpoint": "*",
-    "last_verified": "*",
-    "status": "*",
-    "vendor": "*"
+    "endpoint": "string",
+    "last_verified": "null",
+    "status": "string",
+    "vendor": "string"
    },
-   "privacy_notice": "*",
+   "privacy_notice": "string",
    "term": {
-    "term": "*",
-    "year": "*"
+    "term": "integer",
+    "year": "integer"
    }
   }
  },
@@ -229,26 +229,26 @@
    "type": "object"
   },
   "result_shape": {
-   "failed_count": "*",
+   "failed_count": "integer",
    "grades": [
     {
-     "course": "*",
-     "credit": "*",
-     "nature": "*",
-     "passed": "*",
-     "term": "*",
-     "year": "*"
+     "course": "string",
+     "credit": "number",
+     "nature": "string",
+     "passed": "boolean",
+     "term": "string",
+     "year": "string"
     }
    ],
-   "include_scores": "*",
+   "include_scores": "boolean",
    "meta": {
-    "endpoint": "*",
-    "last_verified": "*",
-    "status": "*",
-    "vendor": "*"
+    "endpoint": "string",
+    "last_verified": "string",
+    "status": "string",
+    "vendor": "string"
    },
-   "privacy_notice": "*",
-   "term": "*"
+   "privacy_notice": "string",
+   "term": "null"
   }
  },
  "get_terms": {
@@ -265,18 +265,18 @@
   },
   "result_shape": {
    "meta": {
-    "endpoint": "*",
-    "last_verified": "*",
-    "status": "*",
-    "vendor": "*"
+    "endpoint": "string",
+    "last_verified": "string",
+    "status": "string",
+    "vendor": "string"
    },
-   "privacy_notice": "*",
+   "privacy_notice": "string",
    "terms": [
     {
-     "current": "*",
-     "label": "*",
-     "term": "*",
-     "year": "*"
+     "current": "boolean",
+     "label": "string",
+     "term": "integer",
+     "year": "integer"
     }
    ]
   }
@@ -321,26 +321,26 @@
   "result_shape": {
    "courses": [
     {
-     "campus": "*",
-     "credit": "*",
-     "name": "*",
-     "place": "*",
-     "sessions": "*",
-     "teacher": "*",
-     "weekday": "*",
-     "weeks": "*"
+     "campus": "null",
+     "credit": "null",
+     "name": "string",
+     "place": "string",
+     "sessions": "string",
+     "teacher": "string",
+     "weekday": "integer",
+     "weeks": "string"
     }
    ],
    "meta": {
-    "endpoint": "*",
-    "last_verified": "*",
-    "status": "*",
-    "vendor": "*"
+    "endpoint": "string",
+    "last_verified": "string",
+    "status": "string",
+    "vendor": "string"
    },
-   "privacy_notice": "*",
+   "privacy_notice": "string",
    "term": {
-    "term": "*",
-    "year": "*"
+    "term": "integer",
+    "year": "integer"
    }
   }
  },
@@ -357,9 +357,9 @@
    "type": "object"
   },
   "result_shape": {
-   "imported": "*",
-   "message": "*",
-   "valid": "*"
+   "imported": "boolean",
+   "message": "string",
+   "valid": "boolean"
   }
  }
 }

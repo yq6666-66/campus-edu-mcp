@@ -1,0 +1,152 @@
+{
+ "clear-session": [],
+ "configure": [
+  {
+   "flags": [
+    "--base-url"
+   ],
+   "required": true,
+   "default": null,
+   "choices": null
+  },
+  {
+   "flags": [
+    "--vendor"
+   ],
+   "required": false,
+   "default": "qiangzhi",
+   "choices": [
+    "qiangzhi",
+    "zfsoft_v9"
+   ]
+  },
+  {
+   "flags": [
+    "--school"
+   ],
+   "required": false,
+   "default": null,
+   "choices": null
+  },
+  {
+   "flags": [
+    "--min-interval"
+   ],
+   "required": false,
+   "default": 2.0,
+   "choices": null
+  }
+ ],
+ "doctor": [
+  {
+   "flags": [
+    "--online"
+   ],
+   "required": false,
+   "default": false,
+   "choices": null
+  }
+ ],
+ "export-ics": [
+  {
+   "flags": [
+    "--term-start"
+   ],
+   "required": true,
+   "default": null,
+   "choices": null
+  },
+  {
+   "flags": [
+    "--periods"
+   ],
+   "required": true,
+   "default": null,
+   "choices": null
+  },
+  {
+   "flags": [
+    "--out"
+   ],
+   "required": true,
+   "default": null,
+   "choices": null
+  },
+  {
+   "flags": [
+    "--year"
+   ],
+   "required": false,
+   "default": null,
+   "choices": null
+  },
+  {
+   "flags": [
+    "--term"
+   ],
+   "required": false,
+   "default": null,
+   "choices": null
+  }
+ ],
+ "import-session": [
+  {
+   "flags": [
+    "--cookie-file"
+   ],
+   "required": false,
+   "default": null,
+   "choices": null
+  },
+  {
+   "flags": [
+    "--from-env"
+   ],
+   "required": false,
+   "default": false,
+   "choices": null
+  }
+ ],
+ "login": [
+  {
+   "flags": [
+    "--username"
+   ],
+   "required": true,
+   "default": null,
+   "choices": null
+  }
+ ],
+ "schools": [
+  {
+   "flags": [
+    "--dir"
+   ],
+   "required": false,
+   "default": null,
+   "choices": null
+  }
+ ],
+ "serve": [
+  {
+   "flags": [
+    "--transport"
+   ],
+   "required": false,
+   "default": "stdio",
+   "choices": [
+    "stdio",
+    "http"
+   ]
+  },
+  {
+   "flags": [
+    "--port"
+   ],
+   "required": false,
+   "default": 8848,
+   "choices": null
+  }
+ ],
+ "session-status": []
+}

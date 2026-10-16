@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API freeze: `tests/snapshots/api-v1.json` snapshots every MCP tool's name, input schema, annotations and result field names; the CLI subcommand set is also frozen by a test.
 - `docs/api-stability.md` (stable vs experimental surface, semver rules, deprecation policy: at least one minor release and 90 days, removal only in a major) and `docs/migration.md` (0.1.0 → 1.0.0).
 - `get_empty_classrooms` results now include `privacy_notice`, like the other data tools.
+- `tests/snapshots/cli-v1.json` freezes every CLI subcommand's flags, defaults and choices; exit-code mapping is tested.
+
+### Changed
+
+- **Breaking (pre-1.0 cleanup):** `get_grades` returns `"term": null` instead of the string `"全部学期"` when no term is given, matching the other tools. See `docs/migration.md`.
+- Snapshot now records leaf JSON types, not only field names.
+
+### Deprecated
+
+- Nothing.
 
 ### Status
 

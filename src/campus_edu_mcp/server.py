@@ -66,7 +66,7 @@ def build_server(service: Service | None = None) -> MCPServer:
         """查询本人成绩。
 
         默认返回课程、学分、课程性质、是否通过；include_scores=true 时才返回分数和绩点。
-        year 与 term 都不填则返回全部学期。返回的数据会进入模型上下文。
+        year 与 term 都不填则返回全部学期（结果中 term 为 null）。返回的数据会进入模型上下文。
         """
         return _safe(svc.grades, year, term, include_scores)
 

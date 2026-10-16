@@ -220,7 +220,7 @@ class Service:
             items = [GradeSummary(**d.model_dump(include=fields)).model_dump() for d in details]
         failed = sum(1 for d in details if d.passed is False)
         return {
-            "term": t.model_dump() if t else "全部学期",
+            "term": t.model_dump() if t else None,  # None = 全部学期
             "include_scores": include_scores,
             "failed_count": failed,
             "grades": items,
