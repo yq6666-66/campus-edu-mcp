@@ -29,6 +29,7 @@ The server is built with the official MCP SDK (`mcp` 2.3.0, `MCPServer`, stdio t
 ## Status and limitations
 
 - Version: `0.3.0` (local development)
+- Experimental `campus-edu-mcp login --username ID` (Qiangzhi only, CLI only, **not live-verified**): manual captcha from a local image file, password via getpass only, never stored and never through MCP; requires a system keyring.
 - `campus-edu-mcp doctor [--online]` self-check (reports presence only, never cookie values).
 - Every result carries `meta.status` (verified / stale / pending). Zhengfang V9 is disabled unless `CAMPUS_EDU_ALLOW_UNVERIFIED=1`.
 - Experimental CLI: `export-ics --term-start --periods --out` (you supply the period times).

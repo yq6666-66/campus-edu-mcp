@@ -236,6 +236,17 @@ class GuardedClient:
                 request = self._client.build_request("GET", target)
             raise UpstreamError("重定向次数过多")
 
+    def export_cookies(self) -> dict[str, str]:
+        """导出当前学校 host 下的 Cookie（仅供 CLI 登录后加密保存，不得打印）。"""
+        host = self.whitelist.host
+        result: dict[str, str] = {}
+        for cookie in self._client.cookies.jar:
+            domain = cookie.domain.lstrip(".")
+            same_site = domain in ("", host) or host.endswith("." + domain)
+            if same_site and cookie.value is not None:
+                result[cookie.name] = cookie.value
+        return result
+
     def close(self) -> None:
         self._client.close()
 

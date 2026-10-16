@@ -44,6 +44,10 @@ def _parser() -> argparse.ArgumentParser:
     src.add_argument("--from-env", action="store_true", help="从环境变量 CAMPUS_EDU_COOKIE 读取")
     sub.add_parser("session-status", help="检查会话是否有效")
     sub.add_parser("clear-session", help="删除本地保存的会话与密钥")
+    lg = sub.add_parser(
+        "login", help="（实验性，未实测）强智账号密码登录；密码只在终端输入，不保存"
+    )
+    lg.add_argument("--username", required=True, help="学号 / 账号")
     d = sub.add_parser("doctor", help="本地自检（不输出 Cookie）")
     d.add_argument("--online", action="store_true", help="额外发 1 个只读请求检查会话是否有效")
     e = sub.add_parser("export-ics", help="（实验性）把课表导出为 .ics 日历文件")
@@ -72,6 +76,38 @@ def _import_session(args: argparse.Namespace) -> int:
     path = store.save(cookies, host=host)
     print(f"已导入 {len(cookies)} 个 Cookie，加密保存到 {path}")
     print("可以删除原始 Cookie 文件了。运行 campus-edu-mcp session-status 检查是否有效。")
+    return 0
+
+
+def _login(args: argparse.Namespace) -> int:
+    import getpass
+
+    from .login import password_login
+    from .storage import data_dir
+
+    config = load_config()
+    if config.vendor != "qiangzhi":
+        raise ConfigError("实验性登录只支持强智（qiangzhi）")
+    store = SessionStore()
+    if not store.persistent:
+        raise ConfigError("系统 keyring 不可用，无法安全保存登录结果；请改用 import-session")
+    print("实验性功能：尚未在真实学校验证。密码只用于本次登录，不会保存。", file=sys.stderr)
+
+    def ask_captcha(path: Path) -> str:
+        print(f"验证码图片已保存到 {path}，请打开查看后输入（用完自动删除）。", file=sys.stderr)
+        return input("验证码：")
+
+    result = password_login(
+        config.base_url,
+        args.username,
+        get_password=lambda: getpass.getpass("密码（不回显）："),
+        ask_captcha=ask_captcha,
+        captcha_dir=data_dir(),
+        min_interval=config.min_interval,
+    )
+    host = httpx.URL(config.base_url).host
+    path = store.save(result.cookies, host=host)
+    print(f"登录成功，已加密保存 {len(result.cookies)} 个 Cookie 到 {path}")
     return 0
 
 
@@ -134,6 +170,8 @@ def run(argv: Sequence[str] | None = None) -> int:
             status = Service().session_status()
             print(redact(status.message))
             return 0 if status.valid else 1
+        if command == "login":
+            return _login(args)
         if command == "doctor":
             from .doctor import render, run_checks
 

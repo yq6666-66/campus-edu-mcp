@@ -42,6 +42,13 @@
 - 同页还有 `jsjy_processAjax`（联动下拉）、`jsjy_rqAjax`、`kxjsgl.do` 与「批量借用申请」按钮：**均不登记**。
 - 会话失效时部分接口返回 HTTP 200 JSON：`{"flag1":2,"msgContent":"请先登录系统"}`。
 
+## 登录页（2026-10-16 只读 GET，未提交登录）
+
+- `GET /jsxsd/`：表单 `action=/jsxsd/xk/LoginToXk`，字段 `loginMethod=LoginToXk`、`userAccount`、`userPassword`、`RANDOMCODE`、`encoded`。
+- 页面脚本（`js/conwork.js` 的 `encodeInp` 为标准 Base64）：`encoded = encodeInp(账号) + "%%%" + encodeInp(密码)`，提交前清空 `userPassword`。另有一套 `scode#sxh` 混淆分支及微信扫码登录分支，本项目不支持。
+- `GET /jsxsd/verifycode.servlet` 返回 `image/jpeg`。
+- **未做**：任何登录 POST。实验性 `login` 命令状态为 pending。
+
 ## 只读 live 验证（2026-10-16，一所强智校）
 
 - 会话 Cookie 有效时，`GET xskb/xskb_list.do` 返回 `#timetable`。

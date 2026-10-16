@@ -16,6 +16,9 @@ ROOT = Path(__file__).resolve().parent.parent
 QZ = ROOT / "tests" / "fixtures" / "qiangzhi"
 ZF = ROOT / "tests" / "fixtures" / "zfsoft_v9"
 VALID_COOKIE = "FAKE-MOCK-SESSION"
+# 虚构账号 2099000001 / 密码 FAKE-PASS 的 encoded 值，验证码固定 ABCD
+MOCK_ENCODED = "MjA5OTAwMDAwMQ==%%%RkFLRS1QQVNT"
+MOCK_CAPTCHA = "ABCD"
 EXPIRED_JSON = '{"flag1":2,"msgContent":"请先登录系统"}'.encode()
 
 QZ_BASE = "/jsxsd/"
@@ -85,6 +88,23 @@ def make_handler(state: State, vendor: str) -> type[BaseHTTPRequestHandler]:
                     200, json.dumps({"write_hits": state.write_hits}).encode(), "application/json"
                 )
                 return
+            if vendor == "qiangzhi" and path == base:
+                self._send(
+                    200,
+                    (fixtures / login_file).read_bytes(),
+                    "text/html; charset=utf-8",
+                    {"Set-Cookie": "JSESSIONID=FAKE-PRELOGIN; Path=/jsxsd"},
+                )
+                return
+            if vendor == "qiangzhi" and path == base + "verifycode.servlet":
+                self._send(200, b"FAKEIMAGE", "image/jpeg")
+                return
+            if vendor == "qiangzhi" and path == base + "framework/xsMain.jsp":
+                if not self._cookie_ok():
+                    self._send(302, b"", "text/html", {"Location": login_path})
+                    return
+                self._send(200, "<html><title>首页</title></html>".encode(), "text/html")
+                return
             if path in {login_path, base + "Logon.do"}:
                 self._send(200, (fixtures / login_file).read_bytes(), "text/html; charset=utf-8")
                 return
@@ -94,6 +114,29 @@ def make_handler(state: State, vendor: str) -> type[BaseHTTPRequestHandler]:
             parts = urlsplit(self.path)
             length = int(self.headers.get("Content-Length", "0") or 0)
             body = self.rfile.read(length)
+            if vendor == "qiangzhi" and parts.path == login_path:
+                form = dict(
+                    parse_qsl(body.decode("utf-8", errors="replace"), keep_blank_values=True)
+                )
+                ok = form.get("encoded") == MOCK_ENCODED and form.get("RANDOMCODE") == MOCK_CAPTCHA
+                if ok and form.get("userPassword") == "":
+                    self._send(
+                        302,
+                        b"",
+                        "text/html",
+                        {
+                            "Location": base + "framework/xsMain.jsp",
+                            "Set-Cookie": f"JSESSIONID={VALID_COOKIE}; Path=/jsxsd; HttpOnly",
+                        },
+                    )
+                    return
+                page = (
+                    (fixtures / login_file)
+                    .read_bytes()
+                    .replace(b"<h5>", '<font color="red">验证码错误!!</font><h5>'.encode(), 1)
+                )
+                self._send(200, page, "text/html; charset=utf-8")
+                return
             if parts.path == write_path:
                 with state.lock:
                     state.write_hits += 1

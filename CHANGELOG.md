@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-10-16
+
+### Added
+
+- Experimental `campus-edu-mcp login --username ID` (Qiangzhi, CLI only). **Not live-verified (pending)**; only the public login page, captcha image and the page script were inspected read-only.
+  - `encoded = base64(account) + "%%%" + base64(password)`, `userPassword` sent empty, as in the public page script; the alternative scode/sxh obfuscation is not supported.
+  - Password read with `getpass` only (no argv/env/MCP), never written to disk or logs; captcha image stored with mode 0600 and deleted afterwards; resulting cookies go straight into the encrypted `SessionStore` (refuses to run without a keyring).
+  - Separate `LOGIN_RULES` whitelist (login page, captcha, `POST xk/LoginToXk` with fixed `loginMethod` and empty `userPassword`, landing page); the MCP server does not import the login module (tested).
+- `GuardedClient.export_cookies()` returns only cookies for the configured host.
+- Mock server: fictional login flow for tests.
+
 ## [0.3.0] - 2026-10-16
 
 ### Added
