@@ -131,7 +131,19 @@ def check_source(source: str, filename: str = "<string>") -> list[str]:
     return problems
 
 
+def _ensure_utf8_stdio() -> None:
+    """Avoid UnicodeEncodeError on Windows consoles (cp1252)."""
+    import contextlib
+
+    for stream in (sys.stdout, sys.stderr):
+        reconf = getattr(stream, "reconfigure", None)
+        if callable(reconf):
+            with contextlib.suppress(Exception):
+                reconf(encoding="utf-8", errors="replace")
+
+
 def main(paths: list[str] | None = None) -> int:
+    _ensure_utf8_stdio()
     targets = [Path(p) for p in paths] if paths else sorted(ADAPTER_DIR.rglob("*.py"))
     problems: list[str] = []
     for path in targets:

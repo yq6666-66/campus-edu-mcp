@@ -43,7 +43,19 @@ def check_text(text: str, name: str) -> list[str]:
     return problems
 
 
+def _ensure_utf8_stdio() -> None:
+    """Avoid UnicodeEncodeError on Windows consoles (cp1252)."""
+    import contextlib
+
+    for stream in (sys.stdout, sys.stderr):
+        reconf = getattr(stream, "reconfigure", None)
+        if callable(reconf):
+            with contextlib.suppress(Exception):
+                reconf(encoding="utf-8", errors="replace")
+
+
 def main() -> int:
+    _ensure_utf8_stdio()
     problems: list[str] = []
     count = 0
     for base in TARGETS:

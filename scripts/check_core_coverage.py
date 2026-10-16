@@ -18,7 +18,19 @@ CORE = (
 THRESHOLD = 80.0
 
 
+def _ensure_utf8_stdio() -> None:
+    """Avoid UnicodeEncodeError on Windows consoles (cp1252)."""
+    import contextlib
+
+    for stream in (sys.stdout, sys.stderr):
+        reconf = getattr(stream, "reconfigure", None)
+        if callable(reconf):
+            with contextlib.suppress(Exception):
+                reconf(encoding="utf-8", errors="replace")
+
+
 def main(path: str = "coverage.json") -> int:
+    _ensure_utf8_stdio()
     data = json.loads(Path(path).read_text("utf-8"))
     failed = False
     for name, info in data["files"].items():
