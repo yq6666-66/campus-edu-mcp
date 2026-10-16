@@ -32,6 +32,7 @@ from ..models import ClassPeriod, Course, Exam, FreeRoom, ScoreDetail, Term, Ter
 
 _TERM_ID = r"20\d{2}-20\d{2}-[123]"
 _PARAM_TOKEN = r"[A-Za-z0-9_]{0,40}"  # noqa: S105
+_WEEK = r"(?:[1-9]|[12]\d|30)"
 _TEXT = r"[\w\u4e00-\u9fff%+.\-]{0,40}"
 
 TIMETABLE_PATH = "xskb/xskb_list.do"
@@ -100,10 +101,10 @@ RULES: Sequence[Rule] = (
         fixed={"typewhere": frozenset({"jszq"})},
         free={
             "xnxqh": _TERM_ID,
-            "kbjcmsid": _PARAM_TOKEN,
+            "kbjcmsid": r"[A-Za-z0-9_]{1,40}",
             "xqbh": r"\d{0,4}",
-            "zc": r"\d{1,2}",
-            "zc2": r"\d{1,2}",
+            "zc": _WEEK,
+            "zc2": _WEEK,
             "xq": r"[1-7]",
             "xq2": r"[1-7]",
         },
@@ -219,8 +220,10 @@ class QiangzhiAdapter:
             raise UpstreamError("教室查询结果缺少节次表头，页面结构可能已变更")
         codes = [code for code, _s, _e in periods]
         result = []
+        mismatched = 0
         for name, capacity, free in rooms:
             if len(free) != len(codes):
+                mismatched += 1
                 continue
             result.append(
                 FreeRoom(
@@ -228,6 +231,10 @@ class QiangzhiAdapter:
                     capacity=capacity,
                     free_periods=[c for c, ok in zip(codes, free, strict=True) if ok],
                 )
+            )
+        if rooms and not result:
+            raise UpstreamError(
+                f"教室网格的列数与节次表头不一致（{mismatched} 行），页面结构可能已变更"
             )
         return [ClassPeriod(code=c, start=s, end=e) for c, s, e in periods], result
 

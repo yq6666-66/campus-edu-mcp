@@ -54,6 +54,35 @@ def test_parse_room_grid() -> None:
     assert parse_room_grid("<html></html>") == ([], [])
 
 
+def test_room_grid_whitespace_cells_are_free() -> None:
+    html = (
+        '<table id="dataList"><thead><tr><th tdvalue="0102">1</th><th tdvalue="0304">2</th></tr>'
+        "</thead><tr><td><span>虚构楼C(10/5)</span></td>"
+        "<td>&nbsp;<br></td><td> ◆ </td></tr></table>"
+    )
+    assert parse_room_grid(html)[1] == [("虚构楼C", 10, [True, False])]
+
+
+def test_room_grid_column_mismatch_raises() -> None:
+    html = (
+        '<table id="dataList"><thead><tr><th tdvalue="0102">1</th><th tdvalue="0304">2</th></tr>'
+        "</thead><tr><td><span>虚构楼C(10/5)</span></td><td></td></tr></table>"
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith(ROOM_QUERY_PATH):
+            return httpx.Response(200, text=html)
+        return _file("rooms_form.html")
+
+    svc = Service(
+        Config(base_url=BASE, vendor="qiangzhi", min_interval=0),
+        cookies_loader=lambda h: {"JSESSIONID": "FAKE"},
+        transport=httpx.MockTransport(handler),
+    )
+    with pytest.raises(UpstreamError, match="列数"):
+        svc.empty_classrooms(1, 1)
+
+
 def test_input_value() -> None:
     html = '<input value="x&amp;y" name="a"/><input name="b">'
     assert input_value(html, "a") == "x&y"
@@ -85,6 +114,7 @@ def test_empty_classrooms_filters() -> None:
     assert capped["truncated"] is True and len(capped["rooms"]) == 1
     both = svc.empty_classrooms(1, 1, ["0506", "0708"])
     assert [r["name"] for r in both["rooms"]] == ["虚构楼A101", "虚构楼A102"]
+    assert svc.empty_classrooms(1, 1, campus="")["term"] is None
     explicit = svc.empty_classrooms(1, 1, year=2098, term=2, campus="2")
     assert explicit["term"] == {"year": 2098, "term": 2}
 
@@ -200,6 +230,9 @@ GOOD = {
         {"jsids": "9001"},
         {"xq": "8"},
         {"zc": "1;DROP"},
+        {"zc": "0"},
+        {"zc2": "31"},
+        {"kbjcmsid": ""},
         {"xnxqh": "2098"},
         {"xqbh": "abc"},
         {"jszt": "5"},
@@ -290,6 +323,12 @@ def test_doctor_no_session_and_offline_status(
         status_fn=lambda: SessionStatus(imported=True, valid=None, message="x"),
     )
     assert unknown[-1] == Check("session-online", "warn", "x")
+
+    def boom() -> object:
+        raise RuntimeError("secret-ish detail")
+
+    crashed = run_checks(online=True, store_factory=lambda: _store(tmp_path), status_fn=boom)
+    assert crashed[-1].level == "fail" and "secret-ish" not in crashed[-1].detail
 
 
 def test_cli_doctor(

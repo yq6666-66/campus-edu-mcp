@@ -169,6 +169,7 @@ class Service:
             raise ConfigError("week 应在 1-30 之间")
         if not 1 <= weekday <= 7:
             raise ConfigError("weekday 应在 1-7 之间（1=周一）")
+        campus = campus or None
         if campus is not None and not campus.isdigit():
             raise ConfigError("campus 应为校区编号（数字）")
         limit = max(1, min(limit, 200))
@@ -195,7 +196,7 @@ class Service:
         ]
         matched.sort(key=lambda r: (-len(r.free_periods), r.name))
         return {
-            "term": t.model_dump() if t else "系统默认学期",
+            "term": t.model_dump() if t else None,
             "week": week,
             "weekday": weekday,
             "periods": [p.model_dump() for p in period_list],

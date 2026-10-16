@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `get_empty_classrooms`: `term` is `null` when the system default term is used; `campus=""` means all campuses; a grid whose columns do not match the period header raises `UpstreamError`; guard limits weeks to 1-30 and requires `kbjcmsid`.
 - Expired-session detection: a response that starts with `{` is judged only by its JSON login message, never by HTML markers.
 
 ## [0.2.0] - 2026-10-16

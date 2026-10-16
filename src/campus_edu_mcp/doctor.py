@@ -86,7 +86,11 @@ def run_checks(
             from .service import Service
 
             status_fn = Service().session_status
-        status = status_fn()
+        try:
+            status = status_fn()
+        except Exception as exc:  # noqa: BLE001 - 自检不应崩溃，只报告异常类型
+            checks.append(Check("session-online", "fail", f"检查失败：{type(exc).__name__}"))
+            return checks
         valid = getattr(status, "valid", None)
         message = redact(str(getattr(status, "message", "")))
         level = "ok" if valid else ("warn" if valid is None else "fail")
