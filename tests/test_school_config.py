@@ -9,4 +9,4 @@ def test_example-qiangzhi_school_yaml() -> None:
     text = (ROOT / "schools" / "example-qiangzhi.yaml").read_text("utf-8")
     assert "vendor: qiangzhi" in text
     assert "jw.example.edu.cn/jsxsd/" in text
-    assert "last_verified: pending" in text
+    assert "last_verified: 2026-10-16" in text
