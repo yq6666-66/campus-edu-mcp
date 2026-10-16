@@ -7,7 +7,7 @@ import re
 
 from .errors import ConfigError
 
-_NAME = re.compile(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$")
+_NAME = re.compile(r"^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+$")
 
 
 def parse_cookie_text(text: str, host: str | None = None) -> dict[str, str]:
@@ -17,7 +17,8 @@ def parse_cookie_text(text: str, host: str | None = None) -> dict[str, str]:
     * Netscape ``cookies.txt``（制表符分隔 7 列）；
     * 浏览器扩展导出的 JSON 数组（元素含 name/value/domain）。
 
-    给出 ``host`` 时，cookies.txt / JSON 只保留域名匹配的条目。
+    给出 ``host`` 时，cookies.txt / JSON 列表只保留域名匹配的条目；
+    无 domain 字段的条目会被丢弃。纯 name→value 字典视为针对当前 host 的请求头格式。
     """
     stripped = text.strip().lstrip("\ufeff")
     if not stripped:
@@ -35,8 +36,11 @@ def parse_cookie_text(text: str, host: str | None = None) -> dict[str, str]:
 
 
 def _domain_ok(domain: str, host: str | None) -> bool:
-    if host is None or not domain:
+    """结构化 Cookie（含 domain 列/字段）在给定 host 时必须域名匹配。"""
+    if host is None:
         return True
+    if not domain:
+        return False
     domain = domain.lstrip(".").lower()
     host = host.lower()
     return host == domain or host.endswith("." + domain)
@@ -73,7 +77,11 @@ def _parse_json(text: str, host: str | None) -> dict[str, str]:
     if isinstance(data, dict) and "cookies" in data:
         data = data["cookies"]
     if isinstance(data, dict):
-        return {str(k): str(v) for k, v in data.items()}
+        # 纯 name→value：视为当前 host 的请求头格式（无 domain 可校验）
+        # 若值是对象则不是合法的简单字典
+        if any(isinstance(v, (dict, list)) for v in data.values()):
+            raise ConfigError("Cookie JSON 字典值必须是字符串")
+        return {str(k): str(v) for k, v in data.items() if k != "domain"}
     result: dict[str, str] = {}
     if isinstance(data, list):
         for item in data:

@@ -72,3 +72,22 @@ def test_invalid_cookie_names_are_filtered() -> None:
 def test_utf8_bom_header() -> None:
     text = "\ufeffvalid=FAKE_VALUE; session=FAKE_SESSION"
     assert parse_cookie_text(text) == {"valid": "FAKE_VALUE", "session": "FAKE_SESSION"}
+
+
+def test_json_array_requires_domain_when_host() -> None:
+    text = '[{"name": "token", "value": "FAKE_TOKEN"}]'
+    with pytest.raises(ConfigError):
+        parse_cookie_text(text, host="example.edu.cn")
+
+
+def test_json_array_filters_wrong_domain() -> None:
+    text = (
+        '[{"domain": "other.com", "name": "token", "value": "FAKE_OTHER"},'
+        ' {"domain": "example.edu.cn", "name": "ok", "value": "FAKE_OK"}]'
+    )
+    assert parse_cookie_text(text, host="example.edu.cn") == {"ok": "FAKE_OK"}
+
+
+def test_json_dict_nested_rejected() -> None:
+    with pytest.raises(ConfigError, match="字符串"):
+        parse_cookie_text('{"a": {"name": "x", "value": "y"}}')

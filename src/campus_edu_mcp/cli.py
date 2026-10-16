@@ -58,9 +58,10 @@ def _import_session(args: argparse.Namespace) -> int:
             text = args.cookie_file.read_text("utf-8")
         except OSError as exc:
             raise ConfigError("无法读取 Cookie 文件") from exc
-    cookies = parse_cookie_text(text, httpx.URL(config.base_url).host)
+    host = httpx.URL(config.base_url).host
+    cookies = parse_cookie_text(text, host)
     store = SessionStore()
-    path = store.save(cookies)
+    path = store.save(cookies, host=host)
     print(f"已导入 {len(cookies)} 个 Cookie，加密保存到 {path}")
     print("可以删除原始 Cookie 文件了。运行 campus-edu-mcp session-status 检查是否有效。")
     return 0
@@ -80,6 +81,10 @@ def run(argv: Sequence[str] | None = None) -> int:
             url = httpx.URL(args.base_url)
             if url.scheme not in {"http", "https"} or not url.host:
                 raise ConfigError("base-url 必须是 http(s) 绝对地址")
+            if url.username or url.password:
+                raise ConfigError("base-url 不能包含用户名或密码")
+            # 去掉可能残留的 userinfo，仅保存 scheme/host/port/path
+            url = httpx.URL(scheme=url.scheme, host=url.host, port=url.port, path=url.path)
             if url.scheme == "http":
                 print("警告：教务地址使用 http，Cookie 会明文传输。", file=sys.stderr)
             path = save_config(
@@ -96,7 +101,7 @@ def run(argv: Sequence[str] | None = None) -> int:
             return _import_session(args)
         if command == "session-status":
             status = Service().session_status()
-            print(status.message)
+            print(redact(status.message))
             return 0 if status.valid else 1
         if command == "clear-session":
             removed = SessionStore().clear()

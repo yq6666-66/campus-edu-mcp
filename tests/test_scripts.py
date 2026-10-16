@@ -64,4 +64,6 @@ def test_fixture_checker_flags_real_looking_data() -> None:
     assert check_fixtures.check_text('{"xm": "李雷"}', "t")
     assert check_fixtures.check_text("身份证 11010119900307123X", "t")
     assert check_fixtures.check_text("JSESSIONID=ABCDEF1234567890", "t")
+    assert check_fixtures.check_text("sessionid=ABCDEF1234567890", "t")
+    assert check_fixtures.check_text("SERVERID=ABCDEF1234567890", "t")
     assert check_fixtures.check_text('{"xh": "2099000001", "xm": "测试学生"}', "t") == []

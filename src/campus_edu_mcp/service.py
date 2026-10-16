@@ -51,7 +51,7 @@ def resolve_term(year: int | None, term: int | None, today: dt.date | None = Non
 
 def load_cookies(host: str, store: SessionStore | None = None) -> dict[str, str] | None:
     store = store or SessionStore()
-    cookies = store.load()
+    cookies = store.load(host)
     if cookies:
         return cookies
     file = os.environ.get("CAMPUS_EDU_COOKIE_FILE")
@@ -149,16 +149,20 @@ class Service:
         }
 
     def session_status(self) -> SessionStatus:
+        from .redact import redact
+
         try:
             adapter, client = self._adapter()
         except SessionMissing:
             return SessionStatus(imported=False, message="尚未导入会话。" + REIMPORT_HINT)
         except ProjectError as exc:
-            return SessionStatus(imported=False, message=str(exc))
+            return SessionStatus(imported=False, message=redact(str(exc)))
         try:
             valid = adapter.check_session()
         except ProjectError as exc:
-            return SessionStatus(imported=True, valid=None, message=f"无法确认会话状态：{exc}")
+            return SessionStatus(
+                imported=True, valid=None, message=redact(f"无法确认会话状态：{exc}")
+            )
         finally:
             client.close()
         if valid:

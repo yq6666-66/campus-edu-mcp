@@ -19,7 +19,8 @@ NAME_FIELD = re.compile(r"""["'](xm|XM|xsxm)["']\s*:\s*["']([^"']*)["']""")
 LONG_DIGITS = re.compile(r"(?<![\d.])\d{10,18}[\dXx]?(?![\d.])")
 ID_CARD = re.compile(r"(?<!\d)\d{17}[\dXx](?!\d)")
 SECRET = re.compile(
-    r"(?i)(JSESSIONID|route)\s*[=:]\s*[\"']?(?!FAKE|fake|test|TEST)[0-9A-Za-z]{12,}"
+    r"(?i)(JSESSIONID|SESSIONID|SERVERID|route|bzb_jsxsd)\s*[=:]\s*"
+    r"[\"']?(?!FAKE|fake|test|TEST)[0-9A-Za-z._-]{12,}"
 )
 
 

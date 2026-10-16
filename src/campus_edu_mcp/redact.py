@@ -23,6 +23,8 @@ SENSITIVE_KEYS = frozenset(
         "access_token",
         "ticket",
         "jsessionid",
+        "sessionid",
+        "serverid",
         "route",
         "cookie",
         "sfzh",
@@ -91,3 +93,10 @@ def install_logging(verbose: bool = False) -> None:
     logger.handlers[:] = [handler]
     logger.setLevel(logging.DEBUG if verbose else logging.WARNING)
     logger.propagate = False
+    # 第三方 HTTP 库也可能打印 Cookie 头；挂同一过滤器并默认静音
+    for name in ("httpx", "httpcore", "urllib3"):
+        lib = logging.getLogger(name)
+        lib.addFilter(RedactingFilter())
+        if not verbose:
+            lib.setLevel(logging.WARNING)
+        lib.propagate = False

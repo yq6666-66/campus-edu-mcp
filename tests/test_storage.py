@@ -104,3 +104,26 @@ def test_keyring_backend_allowlist() -> None:
     assert is_secure_backend(ChainerBackend([FakeWin()]))
     assert not is_secure_backend(ChainerBackend([FakeWin(), Plain()]))
     assert not is_secure_backend(ChainerBackend([]))
+
+
+def test_session_host_binding(tmp_path: Path) -> None:
+    store = SessionStore(MemoryKeyring(), tmp_path)
+    store.save({"JSESSIONID": "FAKE-SECRET-VALUE"}, host="jw.example.edu.cn")
+    assert store.load(host="jw.example.edu.cn") == {"JSESSIONID": "FAKE-SECRET-VALUE"}
+    assert store.load(host="other.example.edu.cn") is None
+    # 不传 host 时仍可读（兼容）
+    assert store.load() == {"JSESSIONID": "FAKE-SECRET-VALUE"}
+
+
+def test_session_legacy_format_still_loads(tmp_path: Path) -> None:
+    from cryptography.fernet import Fernet
+
+    from campus_edu_mcp.storage import KEY_NAME, SERVICE
+
+    kr = MemoryKeyring()
+    key = Fernet.generate_key().decode("ascii")
+    kr.set_password(SERVICE, KEY_NAME, key)
+    store = SessionStore(kr, tmp_path)
+    token = Fernet(key.encode()).encrypt(b'{"JSESSIONID": "FAKE-LEGACY"}')
+    store.path.write_bytes(token)
+    assert store.load(host="jw.example.edu.cn") == {"JSESSIONID": "FAKE-LEGACY"}

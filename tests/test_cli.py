@@ -79,3 +79,28 @@ def test_serve_invokes_stdio(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("campus_edu_mcp.server.build_server", lambda: Fake())
     assert cli.run([]) == 0
     assert called == ["stdio"]
+
+
+def test_configure_rejects_userinfo(capsys: pytest.CaptureFixture[str]) -> None:
+    code = cli.run(["configure", "--base-url", "https://user:pass@jw.example.edu.cn/jsxsd/"])
+    err = capsys.readouterr().err
+    assert code == 2
+    assert "用户名" in err or "密码" in err
+
+
+def test_session_status_output_redacted(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(
+        service.Service,
+        "session_status",
+        lambda self: SessionStatus(
+            imported=True,
+            valid=None,
+            message="无法确认：JSESSIONID=ABCDEF1234567890SECRET",
+        ),
+    )
+    assert cli.run(["session-status"]) == 1
+    out = capsys.readouterr().out
+    assert "ABCDEF1234567890SECRET" not in out
+    assert "***" in out

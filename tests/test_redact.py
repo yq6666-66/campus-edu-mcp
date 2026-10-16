@@ -62,3 +62,14 @@ def test_redacting_filter_and_logging(caplog: pytest.LogCaptureFixture) -> None:
     assert any(isinstance(f, RedactingFilter) for h in logger.handlers for f in h.filters)
     install_logging(verbose=False)
     assert logger.level == logging.WARNING
+
+
+def test_install_logging_filters_httpx(capsys: pytest.CaptureFixture[str]) -> None:
+    import logging
+
+    from campus_edu_mcp.redact import install_logging
+
+    install_logging(verbose=True)
+    logging.getLogger("httpx").warning("Cookie: JSESSIONID=ABCDEF1234567890")
+    err = capsys.readouterr().err
+    assert "ABCDEF1234567890" not in err

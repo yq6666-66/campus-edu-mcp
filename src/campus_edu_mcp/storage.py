@@ -166,8 +166,9 @@ class SessionStore:
             raise StorageError("找不到会话密钥")
         return Fernet(key.encode("ascii"))
 
-    def save(self, cookies: dict[str, str]) -> Path:
-        token = self._fernet(create=True).encrypt(json.dumps(cookies).encode("utf-8"))
+    def save(self, cookies: dict[str, str], host: str | None = None) -> Path:
+        payload = {"v": 1, "host": host, "cookies": cookies}
+        token = self._fernet(create=True).encrypt(json.dumps(payload).encode("utf-8"))
         self.directory.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".tmp")
         fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
@@ -178,7 +179,7 @@ class SessionStore:
             os.chmod(self.path, 0o600)
         return self.path
 
-    def load(self) -> dict[str, str] | None:
+    def load(self, host: str | None = None) -> dict[str, str] | None:
         if not self.path.exists() or self.backend is None:
             return None
         try:
@@ -187,6 +188,14 @@ class SessionStore:
             logger.warning("会话文件无法解密，已忽略")
             return None
         loaded = json.loads(data)
+        if isinstance(loaded, dict) and isinstance(loaded.get("cookies"), dict):
+            stored_host = loaded.get("host")
+            if host and stored_host and str(stored_host).lower() != host.lower():
+                logger.warning("会话绑定域名与当前配置不符，已忽略")
+                return None
+            cookies = loaded["cookies"]
+            return {str(k): str(v) for k, v in cookies.items()}
+        # 兼容旧格式：整份 JSON 即 cookie 字典
         return {str(k): str(v) for k, v in loaded.items()}
 
     def clear(self) -> bool:
