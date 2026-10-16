@@ -97,10 +97,10 @@ def test_session_status_output_redacted(
         lambda self: SessionStatus(
             imported=True,
             valid=None,
-            message="无法确认：JSESSIONID=ABCDEF1234567890SECRET",
+            message="无法确认：JSESSIONID=FAKESECRETVALUE123456",
         ),
     )
     assert cli.run(["session-status"]) == 1
     out = capsys.readouterr().out
-    assert "ABCDEF1234567890SECRET" not in out
+    assert "FAKESECRETVALUE123456" not in out
     assert "***" in out

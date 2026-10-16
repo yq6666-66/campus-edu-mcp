@@ -20,5 +20,5 @@ regexes = ['''2099\d{6}''']
 
 [allowlist]
 description = "fictional test values and intentional negative samples"
-regexes = ['''FAKE[-_A-Za-z0-9]*''']
-paths = ['''tests/test_scripts\.py''', '''__pycache__''', '''\.venv''']
+regexes = ['''FAKE[-_A-Za-z0-9]*''', '''FAKESESSIONID[0-9A-Za-z]*''', '''FAKESECRETVALUE[0-9A-Za-z]*''']
+paths = ['''tests/test_scripts\.py''', '''tests/test_redact\.py''', '''tests/test_cli\.py''', '''__pycache__''', '''\.venv''']

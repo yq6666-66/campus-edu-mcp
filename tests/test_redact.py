@@ -70,6 +70,6 @@ def test_install_logging_filters_httpx(capsys: pytest.CaptureFixture[str]) -> No
     from campus_edu_mcp.redact import install_logging
 
     install_logging(verbose=True)
-    logging.getLogger("httpx").warning("Cookie: JSESSIONID=ABCDEF1234567890")
+    logging.getLogger("httpx").warning("Cookie: JSESSIONID=FAKESESSIONID123456")
     err = capsys.readouterr().err
-    assert "ABCDEF1234567890" not in err
+    assert "FAKESESSIONID123456" not in err
