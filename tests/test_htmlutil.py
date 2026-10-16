@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from campus_edu_mcp.htmlutil import (
+    has_kb_table,
     looks_like_login,
     parse_kbcontent_blocks,
     parse_period_label,
@@ -59,3 +60,30 @@ def test_table_rows_grades_and_exams() -> None:
 def test_looks_like_login() -> None:
     assert looks_like_login((FIX / "login_page.html").read_text("utf-8"))
     assert not looks_like_login((FIX / "timetable.html").read_text("utf-8"))
+
+
+def test_parse_period_label_loose_dajie() -> None:
+    assert parse_period_label("第一大节") == "1-2节"
+    assert parse_period_label("第3大节") == "5-6节"
+
+
+def test_has_kb_table() -> None:
+    assert has_kb_table((FIX / "timetable.html").read_text("utf-8"))
+    assert not has_kb_table("<html><body>no table</body></html>")
+
+
+def test_period_as_td_column() -> None:
+    html = """
+    <table id="timetable">
+    <tr><th></th><th>星期一</th><th>星期二</th></tr>
+    <tr>
+      <td>第一大节 (01,02小节)</td>
+      <td><div class="kbcontent">高等数学<br/><font title="教师">测试老师A</font></div></td>
+      <td><div class="kbcontent" style="display:none">&nbsp;</div></td>
+    </tr>
+    </table>
+    """
+    courses = parse_kbcontent_blocks(html)
+    assert len(courses) == 1
+    assert courses[0]["weekday"] == 1
+    assert courses[0]["sessions"] == "1-2节"

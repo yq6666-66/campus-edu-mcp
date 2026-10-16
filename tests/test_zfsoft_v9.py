@@ -137,3 +137,15 @@ def test_skips_rows_without_name_and_bad_numbers(adapter: ZfsoftV9Adapter) -> No
 )
 def test_judge_passed(score: str | None, percent: str | None, expected: bool | None) -> None:
     assert judge_passed(score, percent) is expected
+
+
+@respx.mock
+def test_grades_truncated_page_raises(adapter: ZfsoftV9Adapter) -> None:
+    from .conftest import BASE_URL
+
+    payload = {"items": [{"kcmc": "测试课", "cj": "90"}], "totalCount": 3}
+    respx.post(BASE_URL + "cjcx/cjcx_cxXsgrcj.html").mock(
+        return_value=httpx.Response(200, json=payload)
+    )
+    with pytest.raises(UpstreamError, match="截断"):
+        adapter.grades(T)

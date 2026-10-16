@@ -7,7 +7,7 @@ import pytest
 import respx
 
 from campus_edu_mcp.adapters.qiangzhi import RULES, QiangzhiAdapter, term_id
-from campus_edu_mcp.errors import GuardViolation, SessionExpired
+from campus_edu_mcp.errors import GuardViolation, SessionExpired, UpstreamError
 from campus_edu_mcp.guard import GuardedClient, GuardTransport, Whitelist
 from campus_edu_mcp.models import Term
 
@@ -104,3 +104,28 @@ def test_whitelist_allows_common_query_shapes() -> None:
             data={"kksj": "2098-2099-1", "kcxz": "", "kcmc": "", "xsfs": "all"},
         )
     ).allowed
+
+
+@respx.mock
+def test_timetable_missing_table_raises(adapter: QiangzhiAdapter) -> None:
+    html = (
+        "<html><body>系统维护"
+        '<select name="xnxq01id"><option selected value="2098-2099-1">2098</option></select>'
+        "</body></html>"
+    )
+    respx.get(BASE + "xskb/xskb_list.do").mock(return_value=httpx.Response(200, text=html))
+    with pytest.raises(UpstreamError, match="timetable"):
+        adapter.timetable(T)
+
+
+@respx.mock
+def test_grades_missing_name_column_raises(adapter: QiangzhiAdapter) -> None:
+    html = (
+        '<table id="dataList"><tr><th>开课学期</th><th>学分</th></tr>'
+        "<tr><td>2098-2099-1</td><td>3</td></tr></table>"
+    )
+    respx.post(BASE + "kscj/cjcx_list").mock(
+        return_value=httpx.Response(200, text=html, headers={"content-type": "text/html"})
+    )
+    with pytest.raises(UpstreamError, match="课程名称"):
+        adapter.grades(T)

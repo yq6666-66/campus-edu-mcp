@@ -73,6 +73,18 @@ _PERIOD_CLASSIC = re.compile(r"第\s*(\d+)\s*[-—~至到]\s*(\d+)\s*节")
 _PERIOD_DAJIE = re.compile(
     r"第\s*([一二三四五六七八九十\d]+)\s*大节[\s\S]*?[\(（]\s*(\d+)\s*[,，、]\s*(\d+)(?:\s*[,，、]\s*(\d+))?\s*小节[\)）]"
 )
+_PERIOD_DAJIE_LOOSE = re.compile(r"第\s*([一二三四五六七八九十\d]+)\s*大节")
+# 无「小节」括号时的常见映射（两小节一大节）
+_DAJIE_DEFAULT_SESSIONS = {
+    1: (1, 2),
+    2: (3, 4),
+    3: (5, 6),
+    4: (7, 8),
+    5: (9, 10),
+    6: (11, 12),
+    7: (13, 14),
+    8: (15, 16),
+}
 _CN_NUM = {
     "一": 1,
     "二": 2,
@@ -96,6 +108,12 @@ def _strip_tags(fragment: str) -> str:
     return html.unescape(re.sub(r"\s+", " ", text)).strip()
 
 
+def _cn_or_int(token: str) -> int | None:
+    if token.isdigit():
+        return int(token)
+    return _CN_NUM.get(token)
+
+
 def parse_period_label(text: str) -> str | None:
     """把表头节次文字规范成 ``1-2节``。"""
     text = html.unescape(text)
@@ -106,7 +124,18 @@ def parse_period_label(text: str) -> str | None:
     if m:
         start, end = m.group(2), m.group(3)
         return f"{int(start)}-{int(end)}节"
+    m = _PERIOD_DAJIE_LOOSE.search(text)
+    if m:
+        n = _cn_or_int(m.group(1))
+        if n is not None and n in _DAJIE_DEFAULT_SESSIONS:
+            a, b = _DAJIE_DEFAULT_SESSIONS[n]
+            return f"{a}-{b}节"
     return None
+
+
+def has_kb_table(html_text: str) -> bool:
+    """页面是否含强智课表表格（``#timetable`` / ``#kbtable``）。"""
+    return bool(re.search(r"""id\s*=\s*['"](?:timetable|kbtable)['"]""", html_text, re.I))
 
 
 class _KbParser(HTMLParser):
@@ -127,6 +156,8 @@ class _KbParser(HTMLParser):
         self._font_title: str | None = None
         self._font_bits: list[str] = []
         self._skip_kbcontent1 = False
+        self._in_period_td = False
+        self._period_td_bits: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         d = dict(attrs)
@@ -149,10 +180,17 @@ class _KbParser(HTMLParser):
             self._in_th = True
             self._th_bits = []
         elif tag == "td":
-            self._day += 1
+            # 节次列偶发为 <td>：先缓冲首格，结束时再判定
+            if self._row_period is None and self._day == 0 and not self._in_period_td:
+                self._in_period_td = True
+                self._period_td_bits = []
+            else:
+                self._day += 1
         elif tag == "br":
             if self._in_th:
                 self._th_bits.append(" ")
+            elif self._in_period_td:
+                self._period_td_bits.append(" ")
             elif self._kb_depth:
                 self._kb_texts.append("\n")
         elif tag == "div":
@@ -184,6 +222,15 @@ class _KbParser(HTMLParser):
             if label:
                 self._row_period = label
             self._in_th = False
+        elif tag == "td" and self._in_period_td:
+            label = parse_period_label("".join(self._period_td_bits))
+            if label:
+                self._row_period = label
+            else:
+                # 首格不是节次，按星期一计
+                self._day = 1
+            self._in_period_td = False
+            self._period_td_bits = []
         elif tag == "font" and self._font_title is not None:
             self._kb_fonts[self._font_title] = "".join(self._font_bits).strip()
             self._font_title = None
@@ -198,6 +245,8 @@ class _KbParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self._in_th:
             self._th_bits.append(data)
+        elif self._in_period_td:
+            self._period_td_bits.append(data)
         elif self._font_title is not None:
             self._font_bits.append(data)
         elif self._kb_depth and not self._skip_kbcontent1:

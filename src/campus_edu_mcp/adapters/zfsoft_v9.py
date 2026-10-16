@@ -42,6 +42,27 @@ def _int(value: Any) -> int | None:
     return int(number) if number is not None else None
 
 
+def _ensure_page_complete(payload: dict[str, Any], items_key: str = "items") -> None:
+    """若服务端声明的总数大于本页条数，拒绝静默截断。"""
+    items = payload.get(items_key) or []
+    if not isinstance(items, list):
+        return
+    total = None
+    for key in ("totalResult", "totalCount", "total"):
+        raw = payload.get(key)
+        if raw is None:
+            continue
+        try:
+            total = int(raw)
+        except (TypeError, ValueError):
+            continue
+        break
+    if total is not None and total > len(items):
+        raise UpstreamError(
+            f"教务分页结果被截断（已取 {len(items)}/{total} 条），请提高 showCount 或报告适配器缺陷"
+        )
+
+
 TERM_CODE = {1: "3", 2: "12", 3: "16"}
 _YEAR = r"20\d{2}"
 _TERM = r"(3|12|16)?"
@@ -167,8 +188,9 @@ class ZfsoftV9Adapter:
         payload = self._post_json(
             EXAMS_PATH,
             {"doType": "query", "gnmkdm": "N358105"},
-            {**self._term_data(term), "queryModel.showCount": "200"},
+            {**self._term_data(term), "queryModel.showCount": "500"},
         )
+        _ensure_page_complete(payload)
         exams = []
         for row in payload.get("items") or []:
             name = _text(row.get("kcmc"))
@@ -190,8 +212,9 @@ class ZfsoftV9Adapter:
         payload = self._post_json(
             GRADES_PATH,
             {"doType": "query", "gnmkdm": "N305005"},
-            {**self._term_data(term), "queryModel.showCount": "500"},
+            {**self._term_data(term), "queryModel.showCount": "1000"},
         )
+        _ensure_page_complete(payload)
         result = []
         for row in payload.get("items") or []:
             name = _text(row.get("kcmc"))

@@ -1,6 +1,6 @@
 """强智教务（jsxsd 学生端）只读适配器。
 
-端点依据公开资料整理（见 docs/qiangzhi-notes.md），**未在真实学校实测**。
+端点依据公开资料与一所强智高校（a Qiangzhi school）只读实测整理（见 docs/qiangzhi-notes.md）。
 一所强智高校（example-qiangzhi）登录页版权为「湖南强智科技」，同时存在根路径 ``/Logon.do``
 与 ``/jsxsd/`` 两套入口；本适配器面向 ``/jsxsd/`` 学生端。
 
@@ -18,7 +18,13 @@ from httpx import Response
 from ..errors import SessionExpired, UpstreamError
 from ..gradesutil import judge_passed
 from ..guard import GuardedClient, Rule
-from ..htmlutil import looks_like_login, parse_kbcontent_blocks, selected_option, table_rows
+from ..htmlutil import (
+    has_kb_table,
+    looks_like_login,
+    parse_kbcontent_blocks,
+    selected_option,
+    table_rows,
+)
 from ..models import Course, Exam, ScoreDetail, Term
 
 _TERM_ID = r"20\d{2}-20\d{2}-[123]"
@@ -151,6 +157,8 @@ class QiangzhiAdapter:
         wanted = term_id(term)
         if selected != wanted:
             html = self._request("POST", TIMETABLE_PATH, {"xnxq01id": wanted})
+        if not has_kb_table(html):
+            raise UpstreamError("课表页缺少 #timetable/#kbtable，页面结构可能已变更")
         courses = [
             Course(
                 name=str(item["name"]),
@@ -182,6 +190,8 @@ class QiangzhiAdapter:
         if len(body) == 1 and len(body[0]) <= 2:
             return []
         i_name = _header_index(header, "课程名称", "课程")
+        if i_name is None:
+            raise UpstreamError("考试表缺少「课程名称」列，页面结构可能已变更")
         i_time = _header_index(header, "考试时间", "时间")
         i_place = _header_index(header, "考场", "考试地点", "地点")
         i_campus = _header_index(header, "考试校区", "校区")
@@ -217,6 +227,8 @@ class QiangzhiAdapter:
         header, body = rows[0], rows[1:]
         i_term = _header_index(header, "开课学期", "学期")
         i_name = _header_index(header, "课程名称")
+        if i_name is None:
+            raise UpstreamError("成绩表缺少「课程名称」列，页面结构可能已变更")
         i_score = _header_index(header, "成绩")
         i_credit = _header_index(header, "学分")
         i_gp = _header_index(header, "绩点")
