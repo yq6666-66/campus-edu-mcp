@@ -3,7 +3,8 @@
 安全边界：
 
 * 密码只通过 ``getpass`` 在终端读取，不接受命令行参数、环境变量或 MCP 调用；
-  只存在于本函数的局部变量中，不写盘、不写日志。
+  只在本函数内短暂存在，不写盘、不写日志（Python 无法保证内存清零）。
+* 只允许 https 地址（Base64 不是加密）。
 * 登录使用独立的 :data:`LOGIN_RULES` 白名单，与数据查询白名单分开；
   MCP 服务进程不导入本模块。
 * 验证码图片写入本地数据目录（权限 0600），由用户肉眼识别后手动输入，用完即删。
@@ -19,6 +20,7 @@ import base64
 import contextlib
 import os
 import re
+import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,6 +37,8 @@ LOGIN_POST = "xk/LoginToXk"
 LANDING = "framework/xsMain.jsp"
 
 _ACCOUNT = r"[A-Za-z0-9_]{1,32}"
+MAX_CAPTCHA_BYTES = 256 * 1024
+_SECRETISH = re.compile(r"[A-Za-z0-9+/=]{8,}%%%[A-Za-z0-9+/=]*|\d{6,}")
 
 LOGIN_RULES: tuple[Rule, ...] = (
     Rule("GET", LOGIN_PAGE, description="登录页（取初始 Cookie）"),
@@ -77,7 +81,7 @@ def _error_message(html_text: str) -> str:
     ):
         m = re.search(pattern, html_text, re.I)
         if m and m.group(1).strip():
-            return m.group(1).strip()
+            return "登录失败：" + _SECRETISH.sub("***", m.group(1).strip())
     return "登录失败（账号、密码或验证码错误，或学校使用了不支持的登录方式）"
 
 
@@ -90,9 +94,12 @@ def password_login(
     captcha_dir: Path,
     transport: httpx.BaseTransport | None = None,
     min_interval: float = 2.0,
+    allow_http: bool = False,
 ) -> LoginResult:
     if not re.fullmatch(_ACCOUNT, account):
         raise ConfigError("账号格式不支持（仅字母、数字、下划线，1-32 位）")
+    if httpx.URL(base_url).scheme != "https" and not allow_http:
+        raise ConfigError("账号密码登录只允许 https 教务地址")
     client = GuardedClient(
         base_url,
         LOGIN_RULES,
@@ -101,7 +108,7 @@ def password_login(
         min_interval=min_interval,
         login_markers=LOGIN_FAIL_MARKERS,
     )
-    captcha_file = captcha_dir / "captcha.img"
+    captcha_file: Path | None = None
     try:
         page = client.get(LOGIN_PAGE)
         if page.status_code != 200:
@@ -113,8 +120,12 @@ def password_login(
             "image/"
         ):
             raise UpstreamError("获取验证码失败")
-        captcha_dir.mkdir(parents=True, exist_ok=True)
-        fd = os.open(captcha_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        if len(image.content) > MAX_CAPTCHA_BYTES:
+            raise UpstreamError("验证码图片过大，已拒绝")
+        captcha_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+        # mkstemp：随机文件名 + O_EXCL + 0600，避免覆盖与符号链接攻击
+        fd, name = tempfile.mkstemp(prefix="captcha-", suffix=".img", dir=captcha_dir)
+        captcha_file = Path(name)
         with os.fdopen(fd, "wb") as fh:
             fh.write(image.content)
         code = ask_captcha(captcha_file).strip()
@@ -142,13 +153,14 @@ def password_login(
         del encoded
         if response.status_code != 200 or looks_like_login(response.text):
             raise UpstreamError(_error_message(response.text))
-        if "xsMain" not in str(response.url) and "LoginToXk" in response.text:
+        if not response.url.path.endswith("/" + LANDING):
             raise UpstreamError(_error_message(response.text))
         cookies = client.export_cookies()
         if not cookies:
             raise UpstreamError("登录后没有拿到会话 Cookie")
         return LoginResult(cookies=cookies)
     finally:
-        with contextlib.suppress(OSError):
-            captcha_file.unlink()
+        if captcha_file is not None:
+            with contextlib.suppress(OSError):
+                captcha_file.unlink()
         client.close()

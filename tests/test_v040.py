@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import ast
+import functools
+import os
+import stat
 import threading
 from collections.abc import Iterator
 from pathlib import Path
@@ -15,6 +18,7 @@ from campus_edu_mcp.errors import ConfigError, GuardViolation, UpstreamError
 from campus_edu_mcp.guard import GuardedClient
 from campus_edu_mcp.login import (
     CAPTCHA_PATH,
+    LANDING,
     LOGIN_POST,
     LOGIN_RULES,
     LoginResult,
@@ -55,6 +59,9 @@ def _login(
 
     def ask(path: Path) -> str:
         assert path.exists() and path.read_bytes() == b"FAKEIMAGE"
+        assert path.name.startswith("captcha-") and path.parent == tmp_path
+        if os.name == "posix":
+            assert stat.S_IMODE(path.stat().st_mode) == 0o600
         seen.append(path)
         return code
 
@@ -65,6 +72,7 @@ def _login(
         ask_captcha=ask,
         captcha_dir=tmp_path,
         min_interval=0,
+        allow_http=True,
     )
     return result, seen
 
@@ -81,7 +89,7 @@ def test_login_failure_against_mock(
 ) -> None:
     with pytest.raises(UpstreamError, match="验证码错误|登录失败"):
         _login(mock_base, tmp_path, password, code)
-    assert not (tmp_path / "captcha.img").exists()
+    assert not list(tmp_path.glob("captcha-*"))
 
 
 @pytest.mark.parametrize(
@@ -144,9 +152,19 @@ def _transport_login(tmp_path: Path, handler: httpx.MockTransport) -> None:
             {
                 "": httpx.Response(200, text="LoginToXk"),
                 CAPTCHA_PATH: httpx.Response(
+                    200, content=b"i" * (256 * 1024 + 1), headers={"content-type": "image/png"}
+                ),
+            },
+            "过大",
+        ),
+        (
+            {
+                "": httpx.Response(200, text="LoginToXk"),
+                CAPTCHA_PATH: httpx.Response(
                     200, content=b"i", headers={"content-type": "image/png"}
                 ),
-                LOGIN_POST: httpx.Response(200, text="<html>ok, but no cookie</html>"),
+                LOGIN_POST: httpx.Response(302, headers={"location": "/jsxsd/" + LANDING}),
+                LANDING: httpx.Response(200, text="<html>ok, but no cookie</html>"),
             },
             "Cookie",
         ),
@@ -256,9 +274,16 @@ def test_cli_login_end_to_end(
     monkeypatch.setattr(cli, "SessionStore", lambda: SessionStore(keyring, tmp_path / "s"))
     monkeypatch.setattr("getpass.getpass", lambda prompt="": "FAKE-PASS")
     monkeypatch.setattr("builtins.input", lambda prompt="": MOCK_CAPTCHA)
+    from campus_edu_mcp import login as login_mod
+
+    real = login_mod.password_login
+    assert cli.run(["login", "--username", "2099000001"]) == 2  # CLI 拒绝 http
+    monkeypatch.setattr(login_mod, "password_login", functools.partial(real, allow_http=True))
     assert cli.run(["login", "--username", "2099000001"]) == 0
     out = capsys.readouterr()
-    assert "FAKE-PASS" not in out.out + out.err and VALID_COOKIE not in out.out + out.err
+    printed = out.out + out.err
+    assert "FAKE-PASS" not in printed and VALID_COOKIE not in printed
+    assert MOCK_ENCODED not in printed and "RkFLRS1QQVNT" not in printed
     stored = SessionStore(keyring, tmp_path / "s").load("127.0.0.1")
     assert stored and stored["JSESSIONID"] == VALID_COOKIE
 
@@ -271,3 +296,47 @@ def test_cli_login_refuses_without_keyring_or_wrong_vendor(
     assert cli.run(["login", "--username", "2099000001"]) == 2
     monkeypatch.setenv("CAMPUS_EDU_VENDOR", "zfsoft_v9")
     assert cli.run(["login", "--username", "2099000001"]) == 2
+
+
+def test_login_requires_https(tmp_path: Path) -> None:
+    with pytest.raises(ConfigError, match="https"):
+        password_login(
+            "http://jw.example.edu.cn/jsxsd/",
+            "2099000001",
+            get_password=lambda: "x",
+            ask_captcha=lambda p: "A",
+            captcha_dir=tmp_path,
+        )
+
+
+def test_login_cleans_captcha_when_prompt_fails(mock_base: str, tmp_path: Path) -> None:
+    def ask(path: Path) -> str:
+        raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        password_login(
+            mock_base,
+            "2099000001",
+            get_password=lambda: "FAKE-PASS",
+            ask_captcha=ask,
+            captcha_dir=tmp_path,
+            min_interval=0,
+            allow_http=True,
+        )
+    assert not list(tmp_path.glob("captcha-*"))
+
+
+def test_error_message_is_scrubbed(tmp_path: Path) -> None:
+    page = '<font color="red">账号 2099000001 编码 MjA5OTAwMDAwMQ==%%%RkFLRS1QQVNT 无效</font>'
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        rel = request.url.path.removeprefix("/jsxsd/")
+        if rel == "":
+            return httpx.Response(200, text="LoginToXk")
+        if rel == CAPTCHA_PATH:
+            return httpx.Response(200, content=b"i", headers={"content-type": "image/png"})
+        return httpx.Response(200, text=page)
+
+    with pytest.raises(UpstreamError) as info:
+        _transport_login(tmp_path, httpx.MockTransport(handler))
+    assert "2099000001" not in str(info.value) and "%%%" not in str(info.value)

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `encoded = base64(account) + "%%%" + base64(password)`, `userPassword` sent empty, as in the public page script; the alternative scode/sxh obfuscation is not supported.
   - Password read with `getpass` only (no argv/env/MCP), never written to disk or logs; captcha image stored with mode 0600 and deleted afterwards; resulting cookies go straight into the encrypted `SessionStore` (refuses to run without a keyring).
   - Separate `LOGIN_RULES` whitelist (login page, captcha, `POST xk/LoginToXk` with fixed `loginMethod` and empty `userPassword`, landing page); the MCP server does not import the login module (tested).
+- Login hardening after review: https only; captcha file via `mkstemp` (random name, O_EXCL, 0600) in a 0700 dir, capped at 256 KiB, removed even on Ctrl-C; success only when the redirect lands on the main page; server error text is scrubbed of account numbers and encoded credentials.
 - `GuardedClient.export_cookies()` returns only cookies for the configured host.
 - Mock server: fictional login flow for tests.
 
