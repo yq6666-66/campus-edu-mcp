@@ -41,8 +41,10 @@ def data_dir() -> Path:
 @dataclass(frozen=True)
 class Config:
     base_url: str
-    vendor: str = "zfsoft_v9"
+    vendor: str = "qiangzhi"
+    school_id: str | None = None
     min_interval: float = 2.0
+    exams_path: str | None = None
 
 
 def load_config() -> Config:
@@ -62,10 +64,13 @@ def load_config() -> Config:
         min_interval = max(float(interval), 0.0)
     except (TypeError, ValueError) as exc:
         raise ConfigError("min_interval 必须是数字") from exc
+    vendor = os.environ.get("CAMPUS_EDU_VENDOR") or raw.get("vendor", "qiangzhi")
     return Config(
         base_url=str(base_url),
-        vendor=str(raw.get("vendor", "zfsoft_v9")),
+        vendor=str(vendor),
+        school_id=(os.environ.get("CAMPUS_EDU_SCHOOL") or raw.get("school_id")),
         min_interval=min_interval,
+        exams_path=raw.get("exams_path"),
     )
 
 
@@ -78,7 +83,9 @@ def save_config(config: Config) -> Path:
             {
                 "base_url": config.base_url,
                 "vendor": config.vendor,
+                "school_id": config.school_id,
                 "min_interval": config.min_interval,
+                "exams_path": config.exams_path,
             },
             ensure_ascii=False,
             indent=2,

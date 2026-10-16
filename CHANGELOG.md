@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Primary adapter switched to **Qiangzhi (jsxsd)** after confirming one Qiangzhi school uses 强智; school config `schools/example-qiangzhi.yaml` (`last_verified: pending`).
+- Zhengfang V9 adapter retained as secondary / unverified.
 - Initial read-only MCP server using the official MCP SDK 2.3.0 (`MCPServer`, stdio only).
 - MCP tools: `get_timetable(year?, term?)`, `get_exams(year?, term?)`, `get_grades(year?, term?, include_scores=false)`, `session_status()`.
 - Grade tool privacy defaults: by default returns only course name, credits, course nature, and pass/fail status; scores and grade points are returned only when `include_scores=true`.
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limitations
 
+- Qiangzhi exam path (`xsks/xsksap_list`) and a Qiangzhi school post-login entry are not live-verified; timetable/grades paths are based on multi-school public docs.
 - Not yet validated against a real school deployment; endpoint paths and field names are based on public descriptions of zfsoft V9 and fictional fixtures.
 - Not published to PyPI; install from a local clone.
 

@@ -13,7 +13,8 @@ from .redact import redact
 from .service import Service
 
 INSTRUCTIONS = (
-    "这是只读的高校教务助手，只能查询用户本人的课表、考试安排和成绩，不能做任何修改。"
+    "这是只读的高校教务助手（默认强智 jsxsd，可选正方 V9）。"
+    "只能查询用户本人的课表、考试安排和成绩，不能做任何修改。"
     "成绩默认只给出是否通过和学分；只有用户明确想知道分数时才传 include_scores=true。"
     "如果提示会话失效，请让用户自己在终端重新导入 Cookie，不要向用户索要 Cookie 或密码。"
 )

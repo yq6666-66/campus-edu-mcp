@@ -3,10 +3,15 @@
 > 只读的高校教务 MCP 服务：让 AI 回答「我明天几点上课」「下周有什么考试」「上学期挂科了吗」。
 > **非官方项目，只能查询你本人的账号，永远不做选课、退课、评教等任何写操作。**
 
-当前版本 v0.1.0（未发布）。只适配**正方教务 V9**（新正方，地址通常含 `/jwglxt/`），
-**尚未在真实学校完成实测**，接口路径和字段依据公开资料与虚构 fixture 编写，欢迎反馈。
+当前版本 v0.1.0（未发布）。**默认适配强智教务（jsxsd）**；正方 V9 适配器仍保留但未实测。
+
+一所强智高校（[jw.example.edu.cn](https://jw.example.edu.cn/Logon.do?method=logon)）公开登录页显示为湖南强智科技，
+配置见 `schools/example-qiangzhi.yaml`。课表 / 成绩路径有较充分的公开资料；**考试安排路径尚未在本校核实**。
+所有适配器都还没拿真实 Cookie 做过 live 验证。
 
 ## 功能
+
+厂商用 `--vendor qiangzhi|zfsoft_v9` 选择（默认 `qiangzhi`）。
 
 | MCP 工具 | 说明 |
 |---|---|
@@ -34,7 +39,7 @@ cd campus-edu-mcp
 uv sync
 
 # 1. 配置教务地址（换成你学校的）
-uv run campus-edu-mcp configure --base-url https://jw.your-school.edu.cn/jwglxt/
+uv run campus-edu-mcp configure --base-url https://jw.example.edu.cn/jsxsd/ --vendor qiangzhi --school example-qiangzhi
 
 # 2. 在浏览器里登录教务系统，按 F12 → 网络 → 任一请求 → 复制 Cookie 请求头，
 #    保存为 cookie.txt（也支持 cookies.txt 和浏览器扩展导出的 JSON）
@@ -68,9 +73,9 @@ Codex CLI 可以用：`codex mcp add campus-edu -- uv --directory C:\path\to\cam
 ### 没有账号也能试：mock 教务
 
 ```powershell
-uv run python -m mock_server --port 8765     # 终端 1：虚构的正方 V9
+uv run python -m mock_server --port 8765     # 终端 1：默认虚构强智 jsxsd
 # 终端 2
-uv run campus-edu-mcp configure --base-url http://127.0.0.1:8765/jwglxt/ --min-interval 0
+uv run campus-edu-mcp configure --base-url http://127.0.0.1:8765/jsxsd/ --vendor qiangzhi --min-interval 0
 Set-Content mock-cookie.txt "JSESSIONID=FAKE-MOCK-SESSION"
 uv run campus-edu-mcp import-session --cookie-file .\mock-cookie.txt
 uv run campus-edu-mcp session-status

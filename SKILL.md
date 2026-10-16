@@ -1,6 +1,6 @@
 ---
 name: campus-edu
-description: 通过只读的 campus-edu-mcp 查询用户本人的课表、考试安排和成绩（正方教务 V9）。
+description: 通过只读的 campus-edu-mcp 查询用户本人的课表、考试安排和成绩（强智教务（jsxsd；可选正方 V9））。
 ---
 
 # 校园教务助手（只读）

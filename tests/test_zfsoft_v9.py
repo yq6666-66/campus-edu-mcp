@@ -4,8 +4,9 @@ import httpx
 import pytest
 import respx
 
-from campus_edu_mcp.adapters.zfsoft_v9 import RULES, ZfsoftV9Adapter, judge_passed
+from campus_edu_mcp.adapters.zfsoft_v9 import RULES, ZfsoftV9Adapter
 from campus_edu_mcp.errors import SessionExpired, UpstreamError
+from campus_edu_mcp.gradesutil import judge_passed
 from campus_edu_mcp.guard import GuardedClient
 from campus_edu_mcp.models import Term
 

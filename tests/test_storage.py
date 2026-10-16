@@ -55,7 +55,8 @@ def test_config_roundtrip_and_env_override(monkeypatch: pytest.MonkeyPatch) -> N
     with pytest.raises(ConfigError):
         load_config()
     save_config(Config(base_url=BASE_URL, min_interval=3))
-    assert load_config() == Config(base_url=BASE_URL, min_interval=3.0)
+    cfg = load_config()
+    assert cfg.base_url == BASE_URL and cfg.min_interval == 3.0 and cfg.vendor == "qiangzhi"
     monkeypatch.setenv("CAMPUS_EDU_BASE_URL", "https://other.example.edu.cn/jwglxt/")
     monkeypatch.setenv("CAMPUS_EDU_MIN_INTERVAL", "-1")
     cfg = load_config()

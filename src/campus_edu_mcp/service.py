@@ -6,10 +6,11 @@ import datetime as dt
 import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import httpx
 
+from .adapters.qiangzhi import QiangzhiAdapter
 from .adapters.zfsoft_v9 import ZfsoftV9Adapter
 from .cookies import parse_cookie_text
 from .errors import ConfigError, ProjectError, SessionExpired, SessionMissing
@@ -17,7 +18,16 @@ from .guard import GuardedClient
 from .models import PRIVACY_NOTICE, GradeSummary, SessionStatus, Term
 from .storage import Config, SessionStore, load_config
 
-ADAPTERS = {"zfsoft_v9": ZfsoftV9Adapter}
+
+class _AdapterFactory(Protocol):
+    vendor: Any
+    rules: Any
+    login_markers: Any
+
+    def __call__(self, client: GuardedClient, **kwargs: Any) -> Any: ...
+
+
+ADAPTERS: dict[str, Any] = {"qiangzhi": QiangzhiAdapter, "zfsoft_v9": ZfsoftV9Adapter}
 REIMPORT_HINT = "请在终端运行 `campus-edu-mcp import-session --cookie-file <文件>` 重新导入。"
 
 
@@ -65,7 +75,7 @@ class Service:
         self._cookies_loader = cookies_loader or load_cookies
         self._transport = transport
 
-    def _adapter(self) -> tuple[ZfsoftV9Adapter, GuardedClient]:
+    def _adapter(self) -> tuple[Any, GuardedClient]:
         config = self._config or load_config()
         adapter_cls = ADAPTERS.get(config.vendor)
         if adapter_cls is None:
@@ -74,16 +84,22 @@ class Service:
         cookies = self._cookies_loader(host)
         if not cookies:
             raise SessionMissing("尚未导入会话。" + REIMPORT_HINT)
+        markers = getattr(adapter_cls, "login_markers", ("login_slogin", "/cas/login", "/login"))
         client = GuardedClient(
             config.base_url,
             adapter_cls.rules,
             cookies,
             transport=self._transport,
             min_interval=config.min_interval,
+            login_markers=markers,
         )
+        if adapter_cls is QiangzhiAdapter:
+            return QiangzhiAdapter(
+                client, exams_path=config.exams_path or "xsks/xsksap_list"
+            ), client
         return adapter_cls(client), client
 
-    def _run(self, fn: Callable[[ZfsoftV9Adapter], Any]) -> Any:
+    def _run(self, fn: Callable[[Any], Any]) -> Any:
         adapter, client = self._adapter()
         try:
             return fn(adapter)

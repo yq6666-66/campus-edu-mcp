@@ -6,7 +6,15 @@ import json
 import sys
 from pathlib import Path
 
-CORE = ("guard.py", "redact.py", "cookies.py", "service.py", "adapters/zfsoft_v9.py")
+CORE = (
+    "guard.py",
+    "redact.py",
+    "cookies.py",
+    "service.py",
+    "adapters/qiangzhi.py",
+    "adapters/zfsoft_v9.py",
+    "htmlutil.py",
+)
 THRESHOLD = 80.0
 
 

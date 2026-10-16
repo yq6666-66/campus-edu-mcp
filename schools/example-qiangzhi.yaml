@@ -1,0 +1,13 @@
+# 一所强智高校（湖南强智科技）
+school_id: example-qiangzhi
+name: 一所强智高校
+vendor: qiangzhi
+base_url: https://jw.example.edu.cn/jsxsd/
+login_url: https://jw.example.edu.cn/Logon.do?method=logon
+notes: |
+  公开登录页版权为「湖南强智科技发展有限公司」，CSS 版本参数 sjc=V1.32。
+  同时存在根路径 /Logon.do 与 /jsxsd/ 两套入口；本配置指向 jsxsd 学生端。
+  登录页含 verifycode.servlet 验证码、encoded/scode/sxh 加密字段。
+  考试安排路径 xsks/xsksap_list 尚未在本校核实。
+last_verified: pending
+exams_path: xsks/xsksap_list

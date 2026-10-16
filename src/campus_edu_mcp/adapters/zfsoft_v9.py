@@ -15,8 +15,32 @@ from typing import Any, ClassVar
 import httpx
 
 from ..errors import SessionExpired, UpstreamError
+from ..gradesutil import judge_passed
 from ..guard import GuardedClient, Rule
 from ..models import Course, Exam, ScoreDetail, Term
+
+
+def _text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _float(value: Any) -> float | None:
+    text = _text(value)
+    if text is None:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def _int(value: Any) -> int | None:
+    number = _float(value)
+    return int(number) if number is not None else None
+
 
 TERM_CODE = {1: "3", 2: "12", 3: "16"}
 _YEAR = r"20\d{2}"
@@ -60,46 +84,6 @@ RULES: Sequence[Rule] = (
         description="个人成绩查询",
     ),
 )
-
-_PASS_WORDS = ("优秀", "良好", "中等", "及格", "合格", "通过", "优", "良", "中", "A", "B", "C", "D")
-_FAIL_WORDS = ("不及格", "不合格", "不通过", "未通过", "缺考", "F", "E")
-
-
-def _text(value: Any) -> str | None:
-    if value is None:
-        return None
-    s = str(value).strip()
-    return s or None
-
-
-def _float(value: Any) -> float | None:
-    s = _text(value)
-    if s is None:
-        return None
-    try:
-        return float(s)
-    except ValueError:
-        return None
-
-
-def _int(value: Any) -> int | None:
-    f = _float(value)
-    return int(f) if f is not None else None
-
-
-def judge_passed(score: str | None, percent: str | None = None) -> bool | None:
-    """根据成绩判断是否通过；无法判断时返回 None。"""
-    for candidate in (percent, score):
-        num = _float(candidate)
-        if num is not None:
-            return num >= 60
-    if score is None:
-        return None
-    if any(score.startswith(w) for w in _FAIL_WORDS):
-        return False
-    if any(score.startswith(w) for w in _PASS_WORDS):
-        return True
-    return None
 
 
 class ZfsoftV9Adapter:

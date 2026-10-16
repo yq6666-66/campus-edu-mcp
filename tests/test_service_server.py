@@ -35,7 +35,7 @@ def fake_school(request: httpx.Request) -> httpx.Response:
 
 def make_service(cookie: str | None = "FAKE-OK") -> Service:
     return Service(
-        Config(base_url=BASE_URL, min_interval=0),
+        Config(base_url=BASE_URL, vendor="zfsoft_v9", min_interval=0),
         cookies_loader=lambda host: {"JSESSIONID": cookie} if cookie else None,
         transport=httpx.MockTransport(fake_school),
     )
@@ -100,7 +100,7 @@ def test_session_status_variants() -> None:
     bad = Service(Config(base_url=BASE_URL, vendor="nope"), cookies_loader=lambda h: {"a": "b"})
     assert bad.session_status().imported is False
     broken = Service(
-        Config(base_url=BASE_URL, min_interval=0),
+        Config(base_url=BASE_URL, vendor="zfsoft_v9", min_interval=0),
         cookies_loader=lambda h: {"JSESSIONID": "FAKE-OK"},
         transport=httpx.MockTransport(lambda r: httpx.Response(500)),
     )

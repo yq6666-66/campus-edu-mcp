@@ -32,7 +32,11 @@ def _parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command")
     sub.add_parser("serve", help="以 stdio 方式启动 MCP 服务（默认）")
     c = sub.add_parser("configure", help="设置教务系统地址")
-    c.add_argument("--base-url", required=True, help="如 https://jw.example.edu.cn/jwglxt/")
+    c.add_argument("--base-url", required=True, help="如 https://jw.example.edu.cn/jsxsd/")
+    c.add_argument(
+        "--vendor", default="qiangzhi", choices=["qiangzhi", "zfsoft_v9"], help="教务厂商"
+    )
+    c.add_argument("--school", default=None, help="学校配置 id，如 example-qiangzhi")
     c.add_argument("--min-interval", type=float, default=2.0, help="两次请求的最小间隔秒数")
     i = sub.add_parser("import-session", help="从浏览器导出的 Cookie 文件导入会话")
     src = i.add_mutually_exclusive_group(required=True)
@@ -78,7 +82,14 @@ def run(argv: Sequence[str] | None = None) -> int:
                 raise ConfigError("base-url 必须是 http(s) 绝对地址")
             if url.scheme == "http":
                 print("警告：教务地址使用 http，Cookie 会明文传输。", file=sys.stderr)
-            path = save_config(Config(base_url=str(url), min_interval=args.min_interval))
+            path = save_config(
+                Config(
+                    base_url=str(url),
+                    vendor=args.vendor,
+                    school_id=args.school,
+                    min_interval=args.min_interval,
+                )
+            )
             print(f"已保存配置到 {path}")
             return 0
         if command == "import-session":

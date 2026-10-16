@@ -1,6 +1,6 @@
 # campus-edu-mcp
 
-`campus-edu-mcp` is a read-only MCP (Model Context Protocol) server for interacting with campus academic systems. It currently targets Zhengfang Educational Administration V9 (new Zhengfang, commonly found under paths like `/jwglxt/`).
+`campus-edu-mcp` is a read-only MCP (Model Context Protocol) server for interacting with campus academic systems. It defaults to the Qiangzhi (强智) `jsxsd` student portal. A Zhengfang V9 adapter is also included but has not been live-tested. School config for one Qiangzhi school: `schools/example-qiangzhi.yaml`.
 
 The server is built with the official MCP SDK (`mcp` 2.3.0, `MCPServer`, stdio transport only). It exposes course timetables, exam schedules, and grade summaries to MCP clients without exposing sensitive personal identifiers.
 
@@ -30,7 +30,7 @@ The server is built with the official MCP SDK (`mcp` 2.3.0, `MCPServer`, stdio t
 - License: MIT
 - Python: `>=3.11`
 - Managed with `uv`
-- Currently only adapted for Zhengfang V9. The adapter has not yet been tested against a real school deployment; live verification is pending.
+- Default vendor is Qiangzhi jsxsd; Zhengfang V9 is optional. Live verification against a real school cookie is still pending. Exam endpoint path for Qiangzhi is less certain than timetable/grades.
 - No account/password login and no CAPTCHA recognition. Planned for `v0.2`.
 - No write operations are supported. Pull requests for course grabbing, course selection/drop, or proxy-filling teaching evaluations will not be accepted.
 
@@ -68,7 +68,7 @@ You need a valid browser session cookie from the target educational system. You 
 #### Windows PowerShell
 
 ```powershell
-uv run campus-edu-mcp configure --base-url https://jw.your-school.edu.cn/jwglxt/
+uv run campus-edu-mcp configure --base-url https://jw.example.edu.cn/jsxsd/
 uv run campus-edu-mcp import-session --cookie-file .\cookies.txt
 uv run campus-edu-mcp session-status
 ```
@@ -76,7 +76,7 @@ uv run campus-edu-mcp session-status
 #### macOS / Linux
 
 ```bash
-uv run campus-edu-mcp configure --base-url https://jw.your-school.edu.cn/jwglxt/
+uv run campus-edu-mcp configure --base-url https://jw.example.edu.cn/jsxsd/
 uv run campus-edu-mcp import-session --cookie-file cookies.txt
 uv run campus-edu-mcp session-status
 ```
@@ -142,7 +142,7 @@ The repository enforces a strict read-only network policy for adapters:
 ```bash
 uv run python -m mock_server --port 8765            # terminal 1: fictional zfsoft V9
 # terminal 2
-uv run campus-edu-mcp configure --base-url http://127.0.0.1:8765/jwglxt/ --min-interval 0
+uv run campus-edu-mcp configure --base-url http://127.0.0.1:8765/jsxsd/ --min-interval 0
 echo "JSESSIONID=FAKE-MOCK-SESSION" > mock-cookie.txt
 uv run campus-edu-mcp import-session --cookie-file mock-cookie.txt
 uv run campus-edu-mcp session-status

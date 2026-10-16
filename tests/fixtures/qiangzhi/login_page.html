@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>登录</title></head>
+<body>
+  <h5>登录</h5>
+  <form id="loginForm" name="loginForm" action="/jsxsd/xk/LoginToXk" method="post">
+    <input name="userAccount" type="text" placeholder="账号"/>
+    <input name="userPassword" type="password" placeholder="密码"/>
+    <input name="RANDOMCODE" type="text" placeholder="验证码"/>
+    <img id="SafeCodeImg" src="/jsxsd/verifycode.servlet" alt="验证码"/>
+    <input type="hidden" name="encoded" value=""/>
+    <button type="submit">登录</button>
+  </form>
+  <div>Copyright © 2099.虚构强智科技发展有限公司</div>
+</body>
+</html>
