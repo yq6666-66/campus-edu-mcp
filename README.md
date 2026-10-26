@@ -88,14 +88,14 @@ uv run campus-edu-mcp session-status
 
 ## 安全设计
 
-- **只读守卫**（`guard.py`）在 httpx transport 层检查每个出站请求：方法 + 路径 + 参数白名单，
-  固定参数（如 `doType=query`、`gnmkdm`）必须精确匹配，其余参数要匹配正则，未登记的参数直接拒绝；
-  关闭自动重定向，每一跳重新检查，跳到登录页视为会话失效；默认每 2 秒最多 1 次请求。
-- **静态检查**（`scripts/check_adapters.py`）用 AST 禁止适配器自己联网。
-- **Cookie** 只能通过命令行导入，用 Fernet 加密，密钥存系统 keyring；keyring 不可用时不落盘，
-  改用环境变量 `CAMPUS_EDU_COOKIE_FILE` 指向 Cookie 文件（写在 MCP 客户端配置的 env 里）。
-- **日志脱敏**：Cookie、token、学号、URL 中的敏感参数统一打码。
-- **不支持**账号密码登录（计划 v0.2），**不做**任何验证码识别，不接入打码平台。
+1. **只读守卫**（`guard.py`）在 httpx transport 层检查每个出站请求：方法 + 路径 + 参数白名单，
+   固定参数（如 `doType=query`、`gnmkdm`）必须精确匹配，其余参数要匹配正则，未登记的参数直接拒绝；
+   关闭自动重定向，每一跳重新检查，跳到登录页视为会话失效；默认每 2 秒最多 1 次请求。
+2. **静态检查**（`scripts/check_adapters.py`）用 AST 禁止适配器自己联网。
+3. **Cookie** 只能通过命令行导入，用 Fernet 加密，密钥存系统 keyring；keyring 不可用时不落盘，
+   改用环境变量 `CAMPUS_EDU_COOKIE_FILE` 指向 Cookie 文件（写在 MCP 客户端配置的 env 里）。
+4. **日志脱敏**：Cookie、token、学号、URL 中的敏感参数统一打码。
+5. **不支持**账号密码登录（计划 v0.2），**不做**任何验证码识别，不接入打码平台。
 
 详见 [docs/compliance.md](docs/compliance.md) 与 [SECURITY.md](SECURITY.md)。
 
