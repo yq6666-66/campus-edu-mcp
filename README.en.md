@@ -6,50 +6,50 @@ The server is built with the official MCP SDK (`mcp` 2.3.0, `MCPServer`, stdio t
 
 ## Features
 
-- Read-only MCP tools:
-  - `get_timetable(year?, term?)` – fetch class timetable.
-  - `get_exams(year?, term?)` – fetch exam schedule.
-  - `get_grades(year?, term?, include_scores=false)` – fetch grades. By default returns only course name, credits, course nature, and pass/fail status; set `include_scores=true` to also include scores and grade points.
-  - `get_terms()` – list selectable terms (live-verified on one Qiangzhi school).
-  - `get_empty_classrooms(week, weekday, periods?, campus?, min_capacity?, year?, term?, limit=50)` – free classrooms for one teaching week/day (read-only room-occupancy grid; never submits a borrowing request; live-verified on one Qiangzhi school).
-  - `session_status()` – check whether the imported session is still valid.
-- Every tool result includes a `privacy_notice`.
-- Privacy-preserving: student ID, name, and ranking are never returned.
-- Session import from browser-exported cookies only (request header string, Netscape `cookies.txt`, or JSON array). No account/password login, no captcha solving.
-- Encrypted cookie storage using Fernet with a key stored in the system keyring. If keyring is unavailable, no session is written to disk; use the `CAMPUS_EDU_COOKIE_FILE` environment variable to load a cookie file at startup.
-- Read-only guard at the HTTP transport layer: allowlists methods, paths, and parameters (fixed-value enums or free-parameter regexes), rejects unregistered parameters, disables automatic redirects and re-checks every hop, treats redirects to the login page as session expiration, and enforces a default rate limit of at most 1 request per 2 seconds.
-- CLI for configuration, session management, and serving:
-  - `campus-edu-mcp configure --base-url URL [--min-interval 2]`
-  - `campus-edu-mcp import-session --cookie-file FILE | --from-env (CAMPUS_EDU_COOKIE)`
-  - `campus-edu-mcp session-status`
-  - `campus-edu-mcp clear-session`
-  - `campus-edu-mcp serve` (default)
-- Exit codes: `0` for success, `1` when a problem was found, `2` for usage errors, `3` for session/auth errors.
+1. Read-only MCP tools:
+   1. `get_timetable(year?, term?)` – fetch class timetable.
+   2. `get_exams(year?, term?)` – fetch exam schedule.
+   3. `get_grades(year?, term?, include_scores=false)` – fetch grades. By default returns only course name, credits, course nature, and pass/fail status; set `include_scores=true` to also include scores and grade points.
+   4. `get_terms()` – list selectable terms (live-verified on one Qiangzhi school).
+   5. `get_empty_classrooms(week, weekday, periods?, campus?, min_capacity?, year?, term?, limit=50)` – free classrooms for one teaching week/day (read-only room-occupancy grid; never submits a borrowing request; live-verified on one Qiangzhi school).
+   6. `session_status()` – check whether the imported session is still valid.
+2. Every tool result includes a `privacy_notice`.
+3. Privacy-preserving: student ID, name, and ranking are never returned.
+4. Session import from browser-exported cookies only (request header string, Netscape `cookies.txt`, or JSON array). No account/password login, no captcha solving.
+5. Encrypted cookie storage using Fernet with a key stored in the system keyring. If keyring is unavailable, no session is written to disk; use the `CAMPUS_EDU_COOKIE_FILE` environment variable to load a cookie file at startup.
+6. Read-only guard at the HTTP transport layer: allowlists methods, paths, and parameters (fixed-value enums or free-parameter regexes), rejects unregistered parameters, disables automatic redirects and re-checks every hop, treats redirects to the login page as session expiration, and enforces a default rate limit of at most 1 request per 2 seconds.
+7. CLI for configuration, session management, and serving:
+   1. `campus-edu-mcp configure --base-url URL [--min-interval 2]`
+   2. `campus-edu-mcp import-session --cookie-file FILE | --from-env (CAMPUS_EDU_COOKIE)`
+   3. `campus-edu-mcp session-status`
+   4. `campus-edu-mcp clear-session`
+   5. `campus-edu-mcp serve` (default)
+8. Exit codes: `0` for success, `1` when a problem was found, `2` for usage errors, `3` for session/auth errors.
 
 ## Status and limitations
 
-- Version: `1.1.0` (local, unreleased). Stability & deprecation policy: `docs/api-stability.md` (Chinese); upgrade notes: `docs/migration.md`.
-- Experimental `campus-edu-mcp login --username ID` (Qiangzhi only, CLI only, **not live-verified**): manual captcha from a local image file, password via getpass only, never stored and never through MCP; requires a system keyring.
-- `campus-edu-mcp detect-vendor --base-url URL` guesses the vendor from public GET fingerprints (hostname is not trusted).
-- Compatibility table: `docs/supported-vendors.md`.
-- `campus-edu-mcp schools` lists the school registry with `verified` / `stale` (older than 183 days) / `pending`.
-- Experimental Streamable HTTP: `CAMPUS_EDU_HTTP_TOKEN=<32+ random chars> campus-edu-mcp serve --transport http --port 8848` — binds 127.0.0.1 only, requires `Authorization: Bearer <token>`, Host/Origin restricted to localhost.
-- `campus-edu-mcp doctor [--online]` self-check (reports presence only, never cookie values).
-- Every result carries `meta.status` (verified / stale / pending). Zhengfang V9 is disabled unless `CAMPUS_EDU_ALLOW_UNVERIFIED=1`.
-- Experimental CLI: `export-ics --term-start --periods --out` (you supply the period times).
-- License: MIT
-- Python: `>=3.11`
-- Managed with `uv`
-- Default vendor is Qiangzhi jsxsd; Zhengfang V9 is optional. Live verification against a real school cookie is still pending. Exam endpoint path for Qiangzhi is less certain than timetable/grades.
-- No account/password login and no CAPTCHA recognition. Planned for `v0.2`.
-- No write operations are supported. Pull requests for course grabbing, course selection/drop, or proxy-filling teaching evaluations will not be accepted.
+1. Version: `1.1.0` (local, unreleased). Stability & deprecation policy: `docs/api-stability.md` (Chinese); upgrade notes: `docs/migration.md`.
+2. Experimental `campus-edu-mcp login --username ID` (Qiangzhi only, CLI only, **not live-verified**): manual captcha from a local image file, password via getpass only, never stored and never through MCP; requires a system keyring.
+3. `campus-edu-mcp detect-vendor --base-url URL` guesses the vendor from public GET fingerprints (hostname is not trusted).
+4. Compatibility table: `docs/supported-vendors.md`.
+5. `campus-edu-mcp schools` lists the school registry with `verified` / `stale` (older than 183 days) / `pending`.
+6. Experimental Streamable HTTP: `CAMPUS_EDU_HTTP_TOKEN=<32+ random chars> campus-edu-mcp serve --transport http --port 8848` — binds 127.0.0.1 only, requires `Authorization: Bearer <token>`, Host/Origin restricted to localhost.
+7. `campus-edu-mcp doctor [--online]` self-check (reports presence only, never cookie values).
+8. Every result carries `meta.status` (verified / stale / pending). Zhengfang V9 is disabled unless `CAMPUS_EDU_ALLOW_UNVERIFIED=1`.
+9. Experimental CLI: `export-ics --term-start --periods --out` (you supply the period times).
+10. License: MIT
+11. Python: `>=3.11`
+12. Managed with `uv`
+13. Default vendor is Qiangzhi jsxsd; Zhengfang V9 is optional. Live verification against a real school cookie is still pending. Exam endpoint path for Qiangzhi is less certain than timetable/grades.
+14. No account/password login and no CAPTCHA recognition. Planned for `v0.2`.
+15. No write operations are supported. Pull requests for course grabbing, course selection/drop, or proxy-filling teaching evaluations will not be accepted.
 
 ## Quick start
 
 ### Prerequisites
 
-- Python 3.11 or newer
-- [uv](https://docs.astral.sh/uv/)
+1. Python 3.11 or newer
+2. [uv](https://docs.astral.sh/uv/)
 
 ### Install
 
@@ -127,25 +127,25 @@ Replace `<path>` with the absolute path to your local `campus-edu-mcp` repositor
 cloud model (e.g. Codex, ChatGPT, Claude), every tool result **is sent to that model provider** as part
 of the conversation. This project cannot prevent that; it can only minimise what is returned:
 
-- Cookies are imported only via the CLI (file or environment variable) and never pass through MCP or the model.
-- Cookies are encrypted at rest with Fernet; the key lives in the system keyring. Without a usable
-  keyring nothing is written to disk (use `CAMPUS_EDU_COOKIE_FILE`).
-- Tool results never include student ID, name or ranking; grades default to pass/fail + credits.
-- Every result carries a `privacy_notice` reminding you that the data may have reached a cloud model.
-- Logs are redacted (cookies, tokens, student IDs, sensitive URL parameters).
+1. Cookies are imported only via the CLI (file or environment variable) and never pass through MCP or the model.
+2. Cookies are encrypted at rest with Fernet; the key lives in the system keyring. Without a usable
+   keyring nothing is written to disk (use `CAMPUS_EDU_COOKIE_FILE`).
+3. Tool results never include student ID, name or ranking; grades default to pass/fail + credits.
+4. Every result carries a `privacy_notice` reminding you that the data may have reached a cloud model.
+5. Logs are redacted (cookies, tokens, student IDs, sensitive URL parameters).
 
 ## Read-only guarantee
 
 The repository enforces a strict read-only network policy for adapters:
 
-- A guard at the `httpx` transport layer validates every outgoing request against an allowlist of method + path + parameters.
-- Fixed-value enum parameters must match registered values exactly.
-- Free-parameter values must match registered regex patterns.
-- Any unregistered parameter is rejected before the request is sent.
-- Automatic redirects are disabled. Each redirect hop is re-validated against the allowlist.
-- Redirects to the login page are treated as session expiration.
-- Default request rate limit: at most 1 request per 2 seconds.
-- `scripts/check_adapters.py` statically checks adapter code with AST to prevent adapters from making network requests directly. It forbids imports such as `requests`, `urllib.request`, `http.client`, `aiohttp`, and `socket`, as well as direct creation of `httpx.Client` and similar clients.
+1. A guard at the `httpx` transport layer validates every outgoing request against an allowlist of method + path + parameters.
+2. Fixed-value enum parameters must match registered values exactly.
+3. Free-parameter values must match registered regex patterns.
+4. Any unregistered parameter is rejected before the request is sent.
+5. Automatic redirects are disabled. Each redirect hop is re-validated against the allowlist.
+6. Redirects to the login page are treated as session expiration.
+7. Default request rate limit: at most 1 request per 2 seconds.
+8. `scripts/check_adapters.py` statically checks adapter code with AST to prevent adapters from making network requests directly. It forbids imports such as `requests`, `urllib.request`, `http.client`, `aiohttp`, and `socket`, as well as direct creation of `httpx.Client` and similar clients.
 
 ## Try it without a school account
 
@@ -178,8 +178,8 @@ uv run python scripts/check_fixtures.py
 
 Coverage requirements:
 
-- Core modules: `>=80%`
-- Overall project: `>=70%`
+1. Core modules: `>=80%`
+2. Overall project: `>=70%`
 
 A mock server that provides fictional Zhengfang V9 endpoints is available:
 
