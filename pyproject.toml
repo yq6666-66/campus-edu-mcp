@@ -18,7 +18,7 @@ dependencies = [
     "httpx==0.28.1",
     "keyring>=25.7.0",
     "mcp==2.3.0",
-    "pydantic==2.14.1",
+    "pydantic==2.14.2",
 ]
 
 [project.scripts]
